@@ -39,6 +39,24 @@ ScaffoldingReadMe.txt
 # dotenv environment variables file
 .env
 
+# Local development and secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# IDE and editor files
+.vs/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
 # Others
 ~$*
 *~
