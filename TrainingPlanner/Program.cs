@@ -1,10 +1,21 @@
 using TrainingPlanner.Components;
+using TrainingPlanner.Services.Api;
+using TrainingPlanner.Services.Calendar;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+var apiBaseUrl = builder.Configuration.GetValue<string>("Api:BaseUrl") ?? "https://localhost:5001/";
+
+builder.Services.AddHttpClient<ITrainingPlannerApiClient, TrainingPlannerApiClient>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
+});
+
+builder.Services.AddScoped<ICalendarSidebarService, CalendarSidebarService>();
 
 var app = builder.Build();
 

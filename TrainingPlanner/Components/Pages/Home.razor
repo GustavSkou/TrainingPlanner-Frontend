@@ -2,117 +2,37 @@
 
 <PageTitle>Home</PageTitle>
 
-<div>
-    <div>
-        <h1>@monthNames[currentMonth.Month - 1] @currentMonth.Year</h1>
+<div class="content">
+    <div class="sidebar-container">
+        <Calendar_sidebar/>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                @foreach (var weekDay in weekDaysNamesShort)
-                {
-                    <th>@weekDay</th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @for (var row = 0; row < 6; row++)
-            {
-                <tr>
-                    @for (var col = 0; col < 7; col++)
-                    {
-                        var day = calendarDays[row * 7 + col];
-                        <td class="@(day.Month == currentMonth.Month ? "current-month" : "other-month")">
-                            
-                            @if (day.Day == 1 || day.Day == DateTime.DaysInMonth(day.Year, day.Month)) {
-                                <p>@day.Day @monthNames[day.Month - 1].Substring(0,3)</p>  
-                            } else {
-                                <p>@day.Day</p>
-                            }
-                            <div>
-                                dsa
-                            </div>
+    <div class="calendar-container">
+        <Calendar/>
+    </div>
 
-                        </td>
-                    }
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="summary-container">
+        <Calendar_summary/>
+    </div>
+
 </div>
 
 <style>
-    table {
-        border-collapse: collapse;
+    .content {
+        display: flex;
         width: 100%;
-    }
-    tr {
-        height: 75px;
-    }
-    th, td {
-        width: 14%;
-    }
-    th {
-        padding: 0.5rem;
-        text-align: right;
+        padding: 0px;
+        gap: 0;
     }
 
-    td {
-        border: 1px solid #ddd;
-        padding: 0.5rem;
-        text-align: right;
-        vertical-align: top;
-    }
-    td p {
-        margin: 0px;
+    .sidebar-container {
+        flex: 0 0 20%;
+        overflow-y: auto;
     }
 
-    .other-month {
-        color: #999;
-    }
-
-    .current-month {
-        color: #222;
+    .calendar-container {
+        flex: 0 0 80%;
+        overflow-y: auto;
+        padding-right: 1rem;
     }
 </style>
-
-@code {
-    private DateTime currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-    private string[] weekDaysNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    private string[] weekDaysNamesShort = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    private string[] monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-    private List<DateTime> calendarDays => GetCalendarDays(currentMonth);
-
-    private List<DateTime> GetCalendarDays(DateTime month)
-    {
-        var firstDayOfMonth = new DateTime(month.Year, month.Month, 1);
-        var daysInMonth = DateTime.DaysInMonth(month.Year, month.Month);
-
-        int leadingDays = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
-
-        int totalCells = 42;
-        int trailingDays = totalCells - leadingDays - daysInMonth;
-
-        var result = new List<DateTime>();
-
-        for (int i = leadingDays; i > 0; i--)
-        {
-            result.Add(firstDayOfMonth.AddDays(-i));
-        }
-
-        for (int i = 0; i < daysInMonth; i++)
-        {
-            result.Add(firstDayOfMonth.AddDays(i));
-        }
-
-        var nextMonthStart = firstDayOfMonth.AddMonths(1);
-        for (int i = 0; i < trailingDays; i++)
-        {
-            result.Add(nextMonthStart.AddDays(i));
-        }
-
-        return result;
-    }
-}

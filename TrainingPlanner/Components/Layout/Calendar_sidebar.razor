@@ -1,0 +1,88 @@
+@inject ICalendarSidebarService SidebarService
+
+<div class="sidebar">
+    @if (_isLoading)
+    {
+        <p class="status">Loading categories...</p>
+    }
+    else
+    {
+        <div class="categories">
+            @foreach (TrainingTypeDto type in _types)
+            {
+                <label class="category-item @type.Name">
+                    <input type="checkbox" checked=@type.IsSelected onchange=@type.IsSelected=!type.IsSelected />
+                    <span>@type.Name</span>
+                </label>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .sidebar {
+        width: 250px;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 0.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .status {
+        margin: 0;
+        color: #666;
+    }
+
+    .categories {
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        color: rgb(0, 0, 0);
+        font-weight: 500;
+    }
+
+    .category-item input[type="checkbox"] {
+        cursor: pointer;
+    }
+
+    .other-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .other-section p {
+        margin: 0;
+    }
+
+    .settings-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+</style>
+
+@code {
+    private IReadOnlyList<TrainingTypeDto> _types = Array.Empty<TrainingTypeDto>();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _types = await SidebarService.GetCategoriesAsync();
+        _isLoading = false;
+    }
+}
