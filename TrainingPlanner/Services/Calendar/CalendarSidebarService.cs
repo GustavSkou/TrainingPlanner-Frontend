@@ -1,24 +1,24 @@
 using System.Text.Json;
-using TrainingPlanner.Models.Calendar;
+using TrainingPlanner.Models;
 using TrainingPlanner.Services.Api;
 
 namespace TrainingPlanner.Services.Calendar;
 
 public sealed class CalendarSidebarService(ITrainingPlannerApiClient apiClient) : ICalendarSidebarService
 {
-    private static readonly IReadOnlyList<TrainingTypeDto> FallbackCategories =
+    private static readonly IReadOnlyList<TrainingTypeDTO> FallbackCategories =
     [
-        new TrainingTypeDto(1, "Running", "" ),
-        new TrainingTypeDto(2, "Cycling", "" ),
-        new TrainingTypeDto(3, "Swimming", "" ),
-        new TrainingTypeDto(4, "Workout", "")
+        new TrainingTypeDTO(1, "Running", "" ),
+        new TrainingTypeDTO(2, "Cycling", "" ),
+        new TrainingTypeDTO(3, "Swimming", "" ),
+        new TrainingTypeDTO(4, "Workout", "")
     ];
 
-    public async Task<IReadOnlyList<TrainingTypeDto>> GetCategoriesAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrainingTypeDTO>> GetCategoriesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            IReadOnlyList<TrainingTypeDto>? categories = await apiClient.GetAsync<List<TrainingTypeDto>>("http://localhost:5001/types", cancellationToken);
+            IReadOnlyList<TrainingTypeDTO>? categories = await apiClient.GetAsync<List<TrainingTypeDTO>>("http://localhost:5001/types", cancellationToken);
             return categories ?? FallbackCategories;
         }
         catch (HttpRequestException)

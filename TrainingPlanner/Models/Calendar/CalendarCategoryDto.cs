@@ -1,7 +1,26 @@
-namespace TrainingPlanner.Models.Calendar;
+/*namespace TrainingPlanner.Models.Calendar;
 
-public sealed record TrainingTypeDto(
-    int Id,
-    string Name,
-    string? Description,
-    bool IsSelected = true);
+public class TrainingTypeDto(
+    int id ,
+    string name,
+    string? description,
+    bool isSelected = true) 
+    {
+    
+    public int Id {
+        get{return id;}
+    }
+
+    public string Name {
+        get{return name;}
+    }
+
+    public string? Description {
+        get{return description;}
+    }
+
+    public bool IsSelected {
+        get{return isSelected;} 
+        set{isSelected = value;}
+    }
+}*/

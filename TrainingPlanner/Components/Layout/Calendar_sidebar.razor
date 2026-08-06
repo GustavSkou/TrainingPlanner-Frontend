@@ -1,27 +1,27 @@
+@using TrainingPlanner.Models
 @inject ICalendarSidebarService SidebarService
 
 <div class="sidebar">
-    @if (_isLoading)
-    {
+    @if (_isLoading) {
         <p class="status">Loading categories...</p>
     }
-    else
-    {
+    else {
         <div class="categories">
-            @foreach (TrainingTypeDto type in _types)
-            {
+            @foreach (TrainingTypeDTO type in _types) {
                 <label class="category-item @type.Name">
-                    <input type="checkbox" checked=@type.IsSelected onchange=@type.IsSelected=!type.IsSelected />
+                    <input type="checkbox"  
+                        @bind="type.IsSelected" />
                     <span>@type.Name</span>
                 </label>
             }
         </div>
     }
 </div>
-
+ 
 <style>
     .sidebar {
-        width: 250px;
+        height: 100%;
+        width: min-content;
         padding: 1rem;
         background-color: #f5f5f5;
         border-radius: 0.5rem;
@@ -77,12 +77,12 @@
 </style>
 
 @code {
-    private IReadOnlyList<TrainingTypeDto> _types = Array.Empty<TrainingTypeDto>();
+    private IReadOnlyList<TrainingTypeDTO> _types = Array.Empty<TrainingTypeDTO>();
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         _types = await SidebarService.GetCategoriesAsync();
         _isLoading = false;
-    }
+    }    
 }
