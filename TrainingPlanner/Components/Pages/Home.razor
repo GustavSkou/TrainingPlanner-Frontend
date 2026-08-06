@@ -1,42 +1,328 @@
 ﻿@page "/"
-
-<PageTitle>Home</PageTitle>
-
-<div class="content">
-    <div class="sidebar-container">
-        <Calendar_sidebar/>
-    </div>
-
-    <div class="calendar-container">
-        <Calendar/>
-    </div>
-
-    <div class="summary-container">
-        <Calendar_summary/>
-    </div>
-
-</div>
+@rendermode InteractiveServer
+@using TrainingPlanner.Models
 
 <style>
-    .content {
-        display: flex;
-        width: 100%;
-        padding: 0px;
-        gap: 0;
+    :root {
+        --color-blue: #006aff;
+        --color-green: #34c759;
+        --color-orange: #ff9500;
+        --color-red: #ff3b30;
+        --color-yellow: #ffcc00;
+        --bg-main: #f8f9fa;
+        --bg-card: #ffffff;
+        --text-dark: #1a1a1a;
+        --text-muted: #8e8e93;
+        --border-color: #e5e5ea;
+        --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
-    .sidebar-container {
-        flex: 0 0 20%;
-        overflow-y: auto;
-    }
-
-    .calendar-container {
-        flex: 0 0 60%;
-        overflow-y: auto;
-        padding-right: 1rem;
-    }
-    .summary-container {
-        flex: 0 0 20%;
-        overflow-y: auto;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-family); background-color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    
+    .app-window { width: 100%; max-width: 900px; background: var(--bg-card); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid var(--border-color); }
+    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+    .window-controls { display: flex; gap: 8px; width: 60px; }
+    .control-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .control-dot.close { background-color: var(--color-red); }
+    .control-dot.minimize { background-color: var(--color-yellow); }
+    .control-dot.maximize { background-color: var(--color-green); }
+    .header-title { font-weight: 600; color: var(--text-dark); font-size: 15px; }
+    .header-add { color: var(--color-blue); font-size: 24px; font-weight: 300; cursor: pointer; line-height: 1; width: 60px; text-align: right; }
+    .app-content { display: flex; min-height: 500px; }
+    
+    /* Sidebar / Calendar */
+    .sidebar { flex: 0 0 320px; background-color: var(--bg-main); border-right: 1px solid var(--border-color); padding: 24px; display: flex; flex-direction: column; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .calendar-header h2 { font-size: 18px; font-weight: 700; color: var(--text-dark); }
+    .month-nav { display: flex; gap: 8px; }
+    .nav-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dark); font-weight: 600; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px 0; text-align: center; }
+    .day-name { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
+    .date-cell { display: flex; flex-direction: column; align-items: center; font-size: 14px; height: 40px; color: var(--text-dark); cursor: pointer; }
+    .date-cell.muted { color: #c7c7cc; }
+    .date-number { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .date-cell.active .date-number { border: 2px solid var(--color-blue); font-weight: 600; }
+    
+    /* Dots */
+    .activity-dots { display: flex; gap: 3px; margin-top: 2px; height: 4px; }
+    .dot { width: 4px; height: 4px; border-radius: 50%; }
+    .dot.running { background-color: var(--color-green); }
+    .dot.cycling { background-color: var(--color-orange); }
+    .dot.swimming { background-color: var(--color-blue); }
+    .dot.strength { background-color: var(--color-red); }
+    
+    /* Activity Guide filtering */
+    .activity-guide { margin-top: auto; padding-top: 24px; }
+    .activity-guide h3 { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
+    .guide-legend { display: flex; gap: 12px; font-size: 12px; color: var(--text-dark); flex-wrap: wrap; }
+    .guide-item { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: opacity 0.2s ease; user-select: none; }
+    .guide-item:hover { opacity: 0.8; }
+    .guide-item.inactive { opacity: 0.3; }
+    .guide-item .dot { width: 6px; height: 6px; }
+    
+    /* Agenda */
+    .agenda { flex: 1; padding: 32px 40px; background-color: var(--bg-card); }
+    .agenda-header { margin-bottom: 32px; }
+    .agenda-header h1 { font-size: 24px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+    .agenda-header p { font-size: 14px; color: var(--text-muted); }
+    .workout-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+    .workout-card { display: flex; align-items: center; padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); cursor: pointer; transition: box-shadow 0.2s ease; }
+    .workout-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .workout-indicator { width: 4px; height: 36px; border-radius: 2px; margin-right: 16px; }
+    .workout-indicator.running { background-color: var(--color-green); }
+    .workout-indicator.swimming { background-color: var(--color-blue); }
+    .workout-indicator.cycling { background-color: var(--color-orange); }
+    .workout-indicator.strength { background-color: var(--color-red); }
+    .workout-details { flex: 1; }
+    .workout-title { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+    .workout-metrics { font-size: 13px; color: var(--text-muted); }
+    .chevron { color: var(--text-muted); font-weight: bold; }
+    .btn-add { width: 100%; background-color: var(--color-blue); color: white; border: none; border-radius: 8px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s ease; }
+    .btn-add:hover { background-color: #0056e0; }
 </style>
+
+<div class="app-window">
+    <header class="app-header">
+        <div class="window-controls">
+            <div class="control-dot close"></div>
+            <div class="control-dot minimize"></div>
+            <div class="control-dot maximize"></div>
+        </div>
+        <div class="header-title">Fitness Calendar</div>
+        <div class="header-add">+</div>
+    </header>
+
+    <div class="app-content">
+        <aside class="sidebar">
+            <div class="calendar-header">
+                <h2>@_currentMonth.ToString("MMMM yyyy")</h2>
+                <div class="month-nav">
+                    <button class="nav-btn" @onclick="PreviousMonth">&lt;</button>
+                    <button class="nav-btn" @onclick="NextMonth">&gt;</button>
+                </div>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="day-name">S</div>
+                <div class="day-name">M</div>
+                <div class="day-name">T</div>
+                <div class="day-name">W</div>
+                <div class="day-name">T</div>
+                <div class="day-name">F</div>
+                <div class="day-name">S</div>
+
+                @foreach (var day in _calendarDays)
+                {
+                    var plansForDay = GetPlansForDate(day.Date);
+                    <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == _selectedDate ? "active" : "")" 
+                         @onclick="() => SelectDate(day.Date)">
+                        
+                        <div class="date-number">@day.Date.Day</div>
+                        
+                        <div class="activity-dots">
+                            @foreach (var plan in plansForDay)
+                            {
+                                <div class="dot @GetActivityClass(plan.TrainingType?.Name)"></div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="activity-guide">
+                <div class="guide-legend">
+                    @foreach (var activityType in _activityTypes)
+                    {
+                        <div class="guide-item @(activityType.IsSelected ? "" : "inactive")" 
+                             @onclick="() => ToggleActivityType(activityType)">
+                            <div class="dot @GetActivityClass(activityType.Name)"></div> @activityType.Name
+                        </div>
+                    }
+                </div>
+            </div>
+        </aside>
+
+        <main class="agenda">
+            <div class="agenda-header">
+                <h1>@_selectedDate.ToString("dddd, MMMM d")</h1>
+                @{
+                    var selectedPlans = GetPlansForDate(_selectedDate);
+                    var workoutText = selectedPlans.Count == 1 ? "workout" : "workouts";
+                }
+                <p>Today &bull; @selectedPlans.Count @workoutText scheduled</p>
+            </div>
+
+            <div class="workout-list">
+                @if (selectedPlans.Any())
+                {
+                    @foreach (var plan in selectedPlans)
+                    {
+                        <div class="workout-card">
+                            <div class="workout-indicator @GetActivityClass(plan.TrainingType?.Name)"></div>
+                            <div class="workout-details">
+                                <div class="workout-title">@(plan.Workout?.Name ?? plan.Name)</div>
+                                <div class="workout-metrics">
+                                    @if (plan.Workout != null)
+                                    {
+                                        @($"{(plan.Workout.DistanceMeters / 1000.0):0.0} km \u2022 {plan.Workout.DurationMinutes} min")
+                                    }
+                                </div>
+                            </div>
+                            <div class="chevron">&gt;</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="workout-metrics" style="padding: 16px 0;">No workouts scheduled (or filtered out).</div>
+                }
+            </div>
+
+            <button class="btn-add">
+                + Add Workout
+            </button>
+        </main>
+    </div>
+</div>
+
+@code {
+    private DateTime _currentMonth = new DateTime(2026, 8, 1);
+    private DateTime _selectedDate = new DateTime(2026, 8, 12);
+    private List<CalendarDay> _calendarDays = new();
+    
+    // Master list of available activity types
+    private List<TrainingTypeDTO> _activityTypes = new();
+    
+    // Master list of training plans
+    private List<TrainingPlanDTO> _trainingPlans = new();
+
+    protected override void OnInitialized()
+    {
+        SeedDummyData();
+        GenerateCalendar();
+    }
+
+    private void GenerateCalendar()
+    {
+        _calendarDays.Clear();
+        
+        var firstDayOfMonth = new DateTime(_currentMonth.Year, _currentMonth.Month, 1);
+        var daysInMonth = DateTime.DaysInMonth(_currentMonth.Year, _currentMonth.Month);
+        var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+        var startDate = firstDayOfMonth.AddDays(-startDayOfWeek);
+        
+        for (int i = 0; i < 42; i++)
+        {
+            var date = startDate.AddDays(i);
+            _calendarDays.Add(new CalendarDay
+            {
+                Date = date,
+                IsCurrentMonth = date.Month == _currentMonth.Month
+            });
+        }
+    }
+
+    private void SelectDate(DateTime date)
+    {
+        _selectedDate = date;
+    }
+
+    private void PreviousMonth()
+    {
+        _currentMonth = _currentMonth.AddMonths(-1);
+        GenerateCalendar();
+    }
+
+    private void NextMonth()
+    {
+        _currentMonth = _currentMonth.AddMonths(1);
+        GenerateCalendar();
+    }
+
+    private void ToggleActivityType(TrainingTypeDTO activityType)
+    {
+        // Toggle the IsSelected property that was defined in TrainingTypeDTO
+        activityType.IsSelected = !activityType.IsSelected;
+    }
+
+    private List<TrainingPlanDTO> GetPlansForDate(DateTime date)
+    {
+        // We only return plans for the specified date WHERE the associated TrainingType is currently selected/active.
+        return _trainingPlans
+            .Where(p => p.Date.Date == date.Date && 
+                       (p.TrainingType == null || p.TrainingType.IsSelected))
+            .ToList();
+    }
+
+    private string GetActivityClass(string? typeName)
+    {
+        return typeName?.ToLower() switch
+        {
+            "running" => "running",
+            "swimming" => "swimming",
+            "cycling" => "cycling",
+            "strength" => "strength",
+            _ => "running"
+        };
+    }
+
+    private void SeedDummyData()
+    {
+        // Initialize Master Types
+        _activityTypes = new List<TrainingTypeDTO>
+        {
+            new TrainingTypeDTO(1, "Running", "Running workouts", true),
+            new TrainingTypeDTO(2, "Cycling", "Cycling workouts", true),
+            new TrainingTypeDTO(3, "Swimming", "Swimming workouts", true),
+            new TrainingTypeDTO(4, "Strength", "Strength workouts", true)
+        };
+
+        var runType = _activityTypes.First(t => t.Name == "Running");
+        var swimType = _activityTypes.First(t => t.Name == "Swimming");
+        var cycleType = _activityTypes.First(t => t.Name == "Cycling");
+        var strengthType = _activityTypes.First(t => t.Name == "Strength");
+
+        // Seed Training Plans
+        _trainingPlans = new List<TrainingPlanDTO>
+        {
+            // August 12
+            new TrainingPlanDTO
+            {
+                Date = new DateTime(2026, 8, 12),
+                Name = "Morning Routine",
+                TrainingType = runType,
+                Workout = new WorkoutDTO { Name = "Morning Run", DistanceMeters = 5200, DurationMinutes = 28 }
+            },
+            new TrainingPlanDTO
+            {
+                Date = new DateTime(2026, 8, 12),
+                Name = "Afternoon Swim",
+                TrainingType = swimType,
+                Workout = new WorkoutDTO { Name = "Pool Swim", DistanceMeters = 1500, DurationMinutes = 35 }
+            },
+            
+            // August 4 (Cycling)
+            new TrainingPlanDTO { Date = new DateTime(2026, 8, 4), Name = "Cycling", TrainingType = cycleType },
+            
+            // August 6 (Running, Strength)
+            new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Run", TrainingType = runType },
+            new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Weights", TrainingType = strengthType },
+            
+            // August 8 (Strength)
+            new TrainingPlanDTO { Date = new DateTime(2026, 8, 8), Name = "Weights", TrainingType = strengthType },
+            
+            // August 11 (Cycling)
+            new TrainingPlanDTO { Date = new DateTime(2026, 8, 11), Name = "Cycling", TrainingType = cycleType },
+            
+            // August 14 (Strength)
+            new TrainingPlanDTO { Date = new DateTime(2026, 8, 14), Name = "Weights", TrainingType = strengthType },
+        };
+    }
+
+    private class CalendarDay
+    {
+        public DateTime Date { get; set; }
+        public bool IsCurrentMonth { get; set; }
+    }
+}
