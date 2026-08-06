@@ -19,8 +19,8 @@
                     @for (int col = 0; col < 7; col++)
                     {
                         DateTime day = calendarDays[row * 7 + col];
-                        <td class="@(day.Month == currentMonth.Month ? "current-month" : "other-month")">
-                            
+                        <td class="@(day.Month == currentMonth.Month ? "current-month" : "other-month") @(day == DateTime.Today ? "today" : "")">
+
                             @if (day.Day == 1 || day.Day == DateTime.DaysInMonth(day.Year, day.Month)) {
                                 <p>@day.Day @monthNames[day.Month - 1].Substring(0,3)</p>  
                             } else {
@@ -45,6 +45,8 @@
     }
     tr {
         height: 75px;
+        display: flex;
+        flex-direction: row;
     }
     th, td {
         width: 14%;
@@ -55,14 +57,23 @@
     }
 
     td {
-        border: 1px solid #ddd;
-        padding: 0.5rem;
-        text-align: right;
-        vertical-align: top;
-    }
-    td p {
-        margin: 0px;
-    }
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+    vertical-align: top;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+td p {
+    margin: 0;
+    min-width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    padding: 0 4px;        
+}
 
     .other-month {
         color: #999;
@@ -70,6 +81,14 @@
 
     .current-month {
         color: #222;
+    }
+
+    .today {
+        
+    }
+    .today p {
+        border-radius: 100%;
+        background-color: rgb(229, 61, 61);
     }
 </style>
 
