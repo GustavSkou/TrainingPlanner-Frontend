@@ -20,7 +20,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: var(--font-family); background-color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
     
-    .app-window { width: 100%; max-width: 900px; background: var(--bg-card); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid var(--border-color); }
+    .app-window { width: 100%; background: var(--bg-card); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid var(--border-color); }
     .app-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
     .window-controls { display: flex; gap: 8px; width: 60px; }
     .control-dot { width: 12px; height: 12px; border-radius: 50%; }
@@ -33,15 +33,20 @@
     
     /* Sidebar / Calendar */
     .sidebar { flex: 0 0 320px; background-color: var(--bg-main); border-right: 1px solid var(--border-color); padding: 24px; display: flex; flex-direction: column; }
+    
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
     .calendar-header h2 { font-size: 18px; font-weight: 700; color: var(--text-dark); }
+    
     .month-nav { display: flex; gap: 8px; }
     .nav-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dark); font-weight: 600; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px 0; text-align: center; }
+    
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 16px 18px; text-align: center; }
+    
     .day-name { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
-    .date-cell { display: flex; flex-direction: column; align-items: center; font-size: 14px; height: 40px; color: var(--text-dark); cursor: pointer; }
+    
+    .date-cell { display: flex; flex-direction: column; align-items: center; font-size: 22px; height: 54px; color: var(--text-dark); cursor: pointer; }
     .date-cell.muted { color: #c7c7cc; }
-    .date-number { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .date-number { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .date-cell.active .date-number { border: 2px solid var(--color-blue); font-weight: 600; }
     
     /* Dots */
@@ -62,55 +67,51 @@
     .guide-item .dot { width: 6px; height: 6px; }
     
     /* Agenda */
-    .agenda { flex: 1; padding: 32px 40px; background-color: var(--bg-card); }
+    .agenda { flex: 1; min-width: 800px; padding: 32px 40px; background-color: var(--bg-card); }
     .agenda-header { margin-bottom: 32px; }
     .agenda-header h1 { font-size: 24px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
     .agenda-header p { font-size: 14px; color: var(--text-muted); }
-    .workout-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+    
+    .workout-list { display: flex; width: 100%; flex-direction: column; gap: 16px; margin-bottom: 32px; }
     .workout-card { display: flex; align-items: center; padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); cursor: pointer; transition: box-shadow 0.2s ease; }
     .workout-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    
     .workout-indicator { width: 4px; height: 36px; border-radius: 2px; margin-right: 16px; }
     .workout-indicator.running { background-color: var(--color-green); }
     .workout-indicator.swimming { background-color: var(--color-blue); }
     .workout-indicator.cycling { background-color: var(--color-orange); }
     .workout-indicator.strength { background-color: var(--color-red); }
+    
     .workout-details { flex: 1; }
     .workout-title { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
     .workout-metrics { font-size: 13px; color: var(--text-muted); }
+    
     .chevron { color: var(--text-muted); font-weight: bold; }
     .btn-add { width: 100%; background-color: var(--color-blue); color: white; border: none; border-radius: 8px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s ease; }
     .btn-add:hover { background-color: #0056e0; }
 </style>
 
 <div class="app-window">
-    <header class="app-header">
-        <div class="window-controls">
-            <div class="control-dot close"></div>
-            <div class="control-dot minimize"></div>
-            <div class="control-dot maximize"></div>
-        </div>
-        <div class="header-title">Fitness Calendar</div>
-        <div class="header-add">+</div>
-    </header>
-
     <div class="app-content">
         <aside class="sidebar">
             <div class="calendar-header">
                 <h2>@_currentMonth.ToString("MMMM yyyy")</h2>
+                <button class="today" @onclick="OnClickToday">Today</button>
                 <div class="month-nav">
-                    <button class="nav-btn" @onclick="PreviousMonth">&lt;</button>
-                    <button class="nav-btn" @onclick="NextMonth">&gt;</button>
+                    <button class="nav-btn" @onclick="OnClickPreviousMonth">&lt;</button>
+                    <button class="nav-btn" @onclick="OnClickNextMonth">&gt;</button>
                 </div>
             </div>
 
             <div class="calendar-grid">
-                <div class="day-name">S</div>
-                <div class="day-name">M</div>
-                <div class="day-name">T</div>
-                <div class="day-name">W</div>
-                <div class="day-name">T</div>
-                <div class="day-name">F</div>
-                <div class="day-name">S</div>
+                
+                <div class="day-name">Mon</div>
+                <div class="day-name">Tue</div>
+                <div class="day-name">Wed</div>
+                <div class="day-name">Thu</div>
+                <div class="day-name">Fri</div>
+                <div class="day-name">Sat</div>
+                <div class="day-name">Sun</div>
 
                 @foreach (var day in _calendarDays)
                 {
@@ -187,8 +188,8 @@
 </div>
 
 @code {
-    private DateTime _currentMonth = new DateTime(2026, 8, 1);
-    private DateTime _selectedDate = new DateTime(2026, 8, 12);
+    private DateTime _currentMonth = DateTime.Today;
+    private DateTime _selectedDate = DateTime.Today;
     private List<CalendarDay> _calendarDays = new();
     
     // Master list of available activity types
@@ -207,9 +208,9 @@
     {
         _calendarDays.Clear();
         
-        var firstDayOfMonth = new DateTime(_currentMonth.Year, _currentMonth.Month, 1);
+        var firstDayOfMonth = new DateTime(_currentMonth.Year, _currentMonth.Month, day: 1);
         var daysInMonth = DateTime.DaysInMonth(_currentMonth.Year, _currentMonth.Month);
-        var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek;
+        var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek - 1; // week through mon - sun
         var startDate = firstDayOfMonth.AddDays(-startDayOfWeek);
         
         for (int i = 0; i < 42; i++)
@@ -228,16 +229,20 @@
         _selectedDate = date;
     }
 
-    private void PreviousMonth()
+    private void OnClickPreviousMonth()
     {
         _currentMonth = _currentMonth.AddMonths(-1);
         GenerateCalendar();
     }
 
-    private void NextMonth()
+    private void OnClickNextMonth()
     {
         _currentMonth = _currentMonth.AddMonths(1);
         GenerateCalendar();
+    }
+
+    private void OnClickToday() {
+        _selectedDate = DateTime.Today;
     }
 
     private void ToggleActivityType(TrainingTypeDTO activityType)
