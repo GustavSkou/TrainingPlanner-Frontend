@@ -15,88 +15,18 @@
         --text-muted: #8e8e93;
         --border-color: #e5e5ea;
         --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --page-horizontal-padding: 0px;
+        --page-vertical-padding: 0px;
+        --sidebar-width: 410px;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font-family); background-color: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    
-    .app-window { width: 100%; background: var(--bg-card); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid var(--border-color); }
-    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-    .window-controls { display: flex; gap: 8px; width: 60px; }
-    .control-dot { width: 12px; height: 12px; border-radius: 50%; }
-    .control-dot.close { background-color: var(--color-red); }
-    .control-dot.minimize { background-color: var(--color-yellow); }
-    .control-dot.maximize { background-color: var(--color-green); }
-    .header-title { font-weight: 600; color: var(--text-dark); font-size: 15px; }
-    .header-add { color: var(--color-blue); font-size: 24px; font-weight: 300; cursor: pointer; line-height: 1; width: 60px; text-align: right; }
-    .app-content { display: flex; min-height: 500px; }
-    
-    /* Sidebar / Calendar */
-    .sidebar { flex: 0 0 320px; background-color: var(--bg-main); border-right: 1px solid var(--border-color); padding: 24px; display: flex; flex-direction: column; }
-    
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .calendar-header h2 { font-size: 18px; font-weight: 700; color: var(--text-dark); }
-    
-    .month-nav { display: flex; gap: 8px; }
-    .nav-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dark); font-weight: 600; }
-    
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 16px 18px; text-align: center; }
-    
-    .day-name { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
-    
-    .date-cell { display: flex; flex-direction: column; align-items: center; font-size: 22px; height: 54px; color: var(--text-dark); cursor: pointer; }
-    .date-cell.muted { color: #c7c7cc; }
-    .date-number { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-    .date-cell.active .date-number { border: 2px solid var(--color-blue); font-weight: 600; }
-    
-    /* Dots */
-    .activity-dots { display: flex; gap: 3px; margin-top: 2px; height: 4px; }
-    .dot { width: 4px; height: 4px; border-radius: 50%; }
-    .dot.running { background-color: var(--color-green); }
-    .dot.cycling { background-color: var(--color-orange); }
-    .dot.swimming { background-color: var(--color-blue); }
-    .dot.strength { background-color: var(--color-red); }
-    
-    /* Activity Guide filtering */
-    .activity-guide { margin-top: auto; padding-top: 24px; }
-    .activity-guide h3 { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
-    .guide-legend { display: flex; gap: 12px; font-size: 12px; color: var(--text-dark); flex-wrap: wrap; }
-    .guide-item { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: opacity 0.2s ease; user-select: none; }
-    .guide-item:hover { opacity: 0.8; }
-    .guide-item.inactive { opacity: 0.3; }
-    .guide-item .dot { width: 6px; height: 6px; }
-    
-    /* Agenda */
-    .agenda { flex: 1; min-width: 800px; padding: 32px 40px; background-color: var(--bg-card); }
-    .agenda-header { margin-bottom: 32px; }
-    .agenda-header h1 { font-size: 24px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
-    .agenda-header p { font-size: 14px; color: var(--text-muted); }
-    
-    .workout-list { display: flex; width: 100%; flex-direction: column; gap: 16px; margin-bottom: 32px; }
-    .workout-card { display: flex; align-items: center; padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); cursor: pointer; transition: box-shadow 0.2s ease; }
-    .workout-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    
-    .workout-indicator { width: 4px; height: 36px; border-radius: 2px; margin-right: 16px; }
-    .workout-indicator.running { background-color: var(--color-green); }
-    .workout-indicator.swimming { background-color: var(--color-blue); }
-    .workout-indicator.cycling { background-color: var(--color-orange); }
-    .workout-indicator.strength { background-color: var(--color-red); }
-    
-    .workout-details { flex: 1; }
-    .workout-title { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
-    .workout-metrics { font-size: 13px; color: var(--text-muted); }
-    
-    .chevron { color: var(--text-muted); font-weight: bold; }
-    .btn-add { width: 100%; background-color: var(--color-blue); color: white; border: none; border-radius: 8px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s ease; }
-    .btn-add:hover { background-color: #0056e0; }
 </style>
 
-<div class="app-window">
+<div class="app-window @(IsResizing ? "resizing" : "")" style="@AppWindowStyle" @onpointermove="OnPointerMove" @onpointerup="StopResizing" @onpointercancel="StopResizing">
     <div class="app-content">
         <aside class="sidebar">
             <div class="calendar-header">
                 <h2>@_currentMonth.ToString("MMMM yyyy")</h2>
-                <button class="today" @onclick="OnClickToday">Today</button>
+                <button class="today-nav" @onclick="OnClickToday">Today</button>
                 <div class="month-nav">
                     <button class="nav-btn" @onclick="OnClickPreviousMonth">&lt;</button>
                     <button class="nav-btn" @onclick="OnClickNextMonth">&gt;</button>
@@ -144,6 +74,12 @@
             </div>
         </aside>
 
+        <div class="resize-handle"
+             @onpointerdown="StartResizing"
+             @onpointerup="StopResizing"
+             @onpointercancel="StopResizing"
+             title="Drag to resize"></div>
+
         <main class="agenda">
             <div class="agenda-header">
                 <h1>@_selectedDate.ToString("dddd, MMMM d")</h1>
@@ -160,7 +96,7 @@
                     @foreach (var plan in selectedPlans)
                     {
                         <div class="workout-card">
-                            <div class="workout-indicator @GetActivityClass(plan.TrainingType?.Name)"></div>
+                            <div class="workout-indicator @plan.TrainingType?.Name.ToLower()"></div>
                             <div class="workout-details">
                                 <div class="workout-title">@(plan.Workout?.Name ?? plan.Name)</div>
                                 <div class="workout-metrics">
@@ -188,9 +124,16 @@
 </div>
 
 @code {
+    private const double SidebarMinWidth = 410;
+    private const double SidebarMaxWidth = 700;
+
     private DateTime _currentMonth = DateTime.Today;
     private DateTime _selectedDate = DateTime.Today;
     private List<CalendarDay> _calendarDays = new();
+    private double _sidebarWidth = SidebarMinWidth;
+    private bool IsResizing;
+    private double _resizeStartX;
+    private double _resizeStartWidth;
     
     // Master list of available activity types
     private List<TrainingTypeDTO> _activityTypes = new();
@@ -202,6 +145,31 @@
     {
         SeedDummyData();
         GenerateCalendar();
+    }
+
+    private string AppWindowStyle => $"--sidebar-width: {_sidebarWidth:0}px;";
+
+    private void StartResizing(PointerEventArgs args)
+    {
+        IsResizing = true;
+        _resizeStartX = args.ClientX;
+        _resizeStartWidth = _sidebarWidth;
+    }
+
+    private void OnPointerMove(PointerEventArgs args)
+    {
+        if (!IsResizing)
+        {
+            return;
+        }
+
+        var nextWidth = _resizeStartWidth + (args.ClientX - _resizeStartX);
+        _sidebarWidth = Math.Clamp(nextWidth, SidebarMinWidth, SidebarMaxWidth);
+    }
+
+    private void StopResizing(PointerEventArgs _)
+    {
+        IsResizing = false;
     }
 
     private void GenerateCalendar()
@@ -243,6 +211,8 @@
 
     private void OnClickToday() {
         _selectedDate = DateTime.Today;
+        _currentMonth = _selectedDate;
+        GenerateCalendar();
     }
 
     private void ToggleActivityType(TrainingTypeDTO activityType)

@@ -12,6 +12,7 @@ main {
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
+    justify-content: center;
 }
 
 
