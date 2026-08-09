@@ -1,6 +1,8 @@
 using TrainingPlanner.Components;
 using TrainingPlanner.Services.Api;
-using TrainingPlanner.Services.Calendar;
+using TrainingPlanner.Services.Contracts;
+using TrainingPlanner.Services.Implementation;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +17,9 @@ builder.Services.AddHttpClient<ITrainingPlannerApiClient, TrainingPlannerApiClie
     client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
 });
 
-builder.Services.AddScoped<ICalendarSidebarService, CalendarSidebarService>();
+builder.Services.AddScoped<ICalendarService, CalendarService>();
+builder.Services.AddScoped<IAgendaService, AgendaService>();
+
 
 var app = builder.Build();
 

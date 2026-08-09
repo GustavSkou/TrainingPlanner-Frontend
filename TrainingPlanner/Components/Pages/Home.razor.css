@@ -109,7 +109,7 @@ body {
 .dot.running { background-color: var(--color-green); }
 .dot.cycling { background-color: var(--color-orange); }
 .dot.swimming { background-color: var(--color-blue); }
-.dot.strength { background-color: var(--color-red); }
+.dot.workout { background-color: var(--color-red); }
 
 /* Activity Guide filtering */
 .activity-guide { margin-top: auto; padding-top: 24px; }
@@ -151,7 +151,7 @@ body {
 .workout-indicator.running { background-color: var(--color-green); }
 .workout-indicator.swimming { background-color: var(--color-blue); }
 .workout-indicator.cycling { background-color: var(--color-orange); }
-.workout-indicator.strength { background-color: var(--color-red); }
+.workout-indicator.workout { background-color: var(--color-red); }
 
 .workout-details { flex: 1; }
 .workout-title { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
