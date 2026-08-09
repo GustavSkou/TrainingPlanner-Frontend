@@ -1,0 +1,116 @@
+@using TrainingPlanner.Models
+
+<main class="agenda">
+    <div class="agenda-header">
+        <h1>@SelectedDate.ToString("dddd, MMMM d")</h1>
+        <p>Today &bull; @SelectedPlans.Count @workoutText scheduled</p>
+    </div>
+
+    <div class="workout-list">
+        @if (SelectedPlans.Any())
+        {
+            @foreach (var plan in SelectedPlans)
+            {
+                <div class="workout-card">
+                    <div class="workout-indicator @plan.TrainingType?.Name.ToLower()"></div>
+                    <div class="workout-details">
+                        <div class="workout-title">@(plan.Workout?.Name ?? plan.Name)</div>
+                        <div class="workout-metrics">
+                            @if (plan.Workout != null)
+                            {
+                                @($"{(plan.Workout.DistanceMeters / 1000.0):0.0} km \u2022 {plan.Workout.DurationMinutes} min")
+                            }
+                        </div>
+                    </div>
+                    <div class="chevron">&gt;</div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="workout-metrics" style="padding: 16px 0;">No workouts scheduled (or filtered out).</div>
+        }
+    </div>
+
+    <div class="add-workout-container @(_isFormExpanded ? "expanded" : "")">
+        <button class="btn-add" @onclick="ToggleForm">
+            @(_isFormExpanded ? "- Cancel" : "+ Add Workout")
+        </button>
+
+        <div class="expandable-form">
+            <EditForm Model="NewTrainingPlan" OnSubmit="SaveWorkout">
+                <div class="form-group">
+                    <label>Workout Name</label>
+                    <InputText @bind-Value="NewTrainingPlan.Name" class="form-control" placeholder="e.g., Evening Run" />
+                </div>
+
+                <div class="form-group">
+                    <label>Activity Type</label>
+                    <InputSelect @bind-Value="NewTrainingPlan.TrainingTypeId" class="form-control" required>
+                        <option value="0">Select a type...</option>
+                        @foreach (var type in ActivityTypes)
+                        {
+                            <option value="@type.Value.Id">@type.Value.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <InputTextArea @bind-Value="NewTrainingPlan.Description" class="form-control" placeholder="Optional notes..." rows="3" />
+                </div>
+
+                <button type="submit" class="btn-submit">Save Plan</button>
+            </EditForm>
+        </div>
+    </div>
+</main>
+
+@code {
+    [Parameter] public DateTime SelectedDate { get; set; }
+    [Parameter] public IReadOnlyList<TrainingPlanDTO> SelectedPlans { get; set; } = Array.Empty<TrainingPlanDTO>();
+    [Parameter] public TrainingPlanDTO NewTrainingPlan { get; set; } = new();
+    [Parameter] public IReadOnlyDictionary<int, TrainingTypeDTO> ActivityTypes { get; set; } = new Dictionary<int, TrainingTypeDTO>();
+    [Parameter] public Task GenerateCalendar { get; set; }
+    [Parameter] public List<TrainingPlanDTO> TrainingPlans { get; set; }
+
+    private TrainingPlanDTO _newTrainingPlan = new() { Date = DateTime.Today };
+    private bool _isFormExpanded;
+
+    private string workoutText => SelectedPlans.Count == 1 ? "workout" : "workouts";
+
+    private async void SaveWorkout()
+    {
+        try
+        {
+            if (_newTrainingPlan.TrainingTypeId == 0)
+            {
+                return;
+            }
+
+            _newTrainingPlan.TrainingType = ActivityTypes[_newTrainingPlan.TrainingTypeId];
+
+            if (string.IsNullOrEmpty(_newTrainingPlan.Name))
+            {
+                _newTrainingPlan.Name = _newTrainingPlan.TrainingType.Name;
+            }
+
+            TrainingPlans.Add(_newTrainingPlan);
+            _isFormExpanded = false;
+            _newTrainingPlan = new TrainingPlanDTO { Date = SelectedDate };
+        }
+        finally
+        {
+            GenerateCalendar.Start();
+        }
+    }
+
+    private void ToggleForm()
+    {
+        _isFormExpanded = !_isFormExpanded;
+        if (_isFormExpanded)
+        {
+            _newTrainingPlan = new TrainingPlanDTO { Date = SelectedDate };
+        }
+    }
+}

@@ -1,0 +1,117 @@
+/* Agenda */
+.agenda {
+    flex: 1;
+    min-width: 0;
+    padding: 32px 40px;
+    background-color: var(--bg-card);
+    position: relative;
+}
+
+/* Extends the agenda's background to the right */
+.agenda::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: 50vw; 
+    background-color: var(--bg-card);
+}
+.agenda-header { margin-bottom: 32px; }
+.agenda-header h1 { font-size: 24px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+.agenda-header p { font-size: 14px; color: var(--text-muted); }
+
+.workout-list { display: flex; width: 100%; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+.workout-card { display: flex; align-items: center; padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); cursor: pointer; transition: box-shadow 0.2s ease; }
+.workout-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+.workout-indicator { width: 4px; height: 36px; border-radius: 2px; margin-right: 16px; }
+.workout-indicator.running { background-color: var(--color-green); }
+.workout-indicator.swimming { background-color: var(--color-blue); }
+.workout-indicator.cycling { background-color: var(--color-orange); }
+.workout-indicator.workout { background-color: var(--color-red); }
+
+.workout-details { flex: 1; }
+.workout-title { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+.workout-metrics { font-size: 13px; color: var(--text-muted); }
+
+.chevron { color: var(--text-muted); font-weight: bold; }
+.btn-add { width: 100%; background-color: var(--color-blue); color: white; border: none; border-radius: 8px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s ease; }
+.btn-add:hover { background-color: #0056e0; }
+
+
+/*TrainingPlan Form*/
+/* Container for the button and form */
+.add-workout-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* Expandable logic */
+.expandable-form {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+    background-color: var(--bg-main);
+    border-radius: 12px;
+}
+
+.add-workout-container.expanded .expandable-form {
+    max-height: 600px; /* Set high enough to fit the form content */
+    opacity: 1;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+/* Form element styling */
+.form-group {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.form-control {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    background-color: var(--bg-card);
+    color: var(--text-dark);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(0, 106, 255, 0.1);
+}
+
+/* Save Button */
+.btn-submit {
+    width: 100%;
+    background-color: var(--color-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 8px;
+}
+
+.btn-submit:hover {
+    background-color: #2ea749;
+}

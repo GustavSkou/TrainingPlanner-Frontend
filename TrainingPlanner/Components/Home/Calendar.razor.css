@@ -1,0 +1,84 @@
+/* Sidebar / Calendar */
+.sidebar {
+    flex: 0 0 var(--sidebar-width);
+    width: var(--sidebar-width);
+    min-width: 260px;
+    max-width: 560px;
+    background-color: var(--bg-main);
+    border-right: 1px solid var(--border-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    position: relative; /* Added to anchor the pseudo-element */
+}
+
+/* Extends the calendar's background to the left */
+.sidebar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 100%;
+    width: 50vw;
+    background-color: var(--bg-main);
+}
+
+.resize-handle {
+    flex: 0 0 10px;
+    width: 10px;
+    margin-left: -5px;
+    margin-right: -5px;
+    background: transparent;
+    cursor: col-resize;
+    position: relative;
+    z-index: 2;
+    touch-action: none;
+}
+.resize-handle::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    width: 2px;
+    background: var(--border-color);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.resize-handle:hover::before,
+.app-window.resizing .resize-handle::before {
+    opacity: 1;
+}
+
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.calendar-header h2 { font-size: 18px; font-weight: 700; color: var(--text-dark); }
+
+.today-nav { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; height: 28px; padding-left: 10px; padding-right: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dark); font-weight: 600; }
+.month-nav { display: flex; gap: 8px; }
+.nav-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dark); font-weight: 600; }
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 16px 18px; text-align: center; }
+
+.day-name { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
+
+.date-cell { display: flex; flex-direction: column; align-items: center; font-size: 22px; height: 54px; color: var(--text-dark); cursor: pointer; }
+.date-cell.muted { color: #c7c7cc; }
+.date-number { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.date-cell.active .date-number { border: 2px solid var(--color-blue); font-weight: 600; }
+
+/* Dots */
+.activity-dots { display: flex; gap: 3px; margin-top: 2px; height: 4px; }
+.dot { width: 4px; height: 4px; border-radius: 50%; }
+.dot.running { background-color: var(--color-green); }
+.dot.cycling { background-color: var(--color-orange); }
+.dot.swimming { background-color: var(--color-blue); }
+.dot.workout { background-color: var(--color-red); }
+
+/* Activity Guide filtering */
+.activity-guide { margin-top: auto; padding-top: 24px; }
+.activity-guide h3 { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
+.guide-legend { display: flex; gap: 12px; font-size: 12px; color: var(--text-dark); flex-wrap: wrap; }
+.guide-item { display: flex; align-items: center; gap: 6px; cursor: pointer; transition: opacity 0.2s ease; user-select: none; }
+.guide-item:hover { opacity: 0.8; }
+.guide-item.inactive { opacity: 0.3; }
+.guide-item .dot { width: 6px; height: 6px; }
