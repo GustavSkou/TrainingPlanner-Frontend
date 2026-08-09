@@ -1,8 +1,0 @@
-using TrainingPlanner.Models;
-
-namespace TrainingPlanner.Services.Calendar;
-
-public interface ICalendarSidebarService
-{
-    Task<IReadOnlyList<TrainingTypeDTO>> GetCategoriesAsync(CancellationToken cancellationToken = default);
-}

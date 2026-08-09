@@ -1,10 +1,11 @@
 using System.Text.Json;
 using TrainingPlanner.Models;
 using TrainingPlanner.Services.Api;
+using TrainingPlanner.Services.Contracts;
 
-namespace TrainingPlanner.Services.Calendar;
+namespace TrainingPlanner.Services.Implementation;
 
-public sealed class CalendarSidebarService(ITrainingPlannerApiClient apiClient) : ICalendarSidebarService
+public sealed class CalendarService(ITrainingPlannerApiClient apiClient) : ICalendarService
 {
     private static readonly IReadOnlyList<TrainingTypeDTO> FallbackCategories =
     [
@@ -14,7 +15,12 @@ public sealed class CalendarSidebarService(ITrainingPlannerApiClient apiClient) 
         new TrainingTypeDTO(4, "Workout", "")
     ];
 
-    public async Task<IReadOnlyList<TrainingTypeDTO>> GetCategoriesAsync(CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<TrainingPlanDTO>> GetTrainingPlansAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<IReadOnlyList<TrainingTypeDTO>> GetTypesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
