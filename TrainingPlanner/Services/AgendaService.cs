@@ -7,7 +7,7 @@ namespace TrainingPlanner.Services.Implementation;
 
 public sealed class AgendaService(ITrainingPlannerApiClient apiClient) : IAgendaService
 {
-    public Task CreateTrainingPlanAsync(CancellationToken cancellationToken = default)
+    public Task CreateTrainingPlanAsync(TrainingPlanDTO trainingPlanDTO, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
