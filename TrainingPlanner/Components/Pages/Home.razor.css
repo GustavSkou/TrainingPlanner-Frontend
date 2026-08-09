@@ -49,7 +49,7 @@ body {
     position: relative; /* Added to anchor the pseudo-element */
 }
 
-/* Extends the calendar's background infinitely to the left */
+/* Extends the calendar's background to the left */
 .sidebar::before {
     content: "";
     position: absolute;
@@ -126,10 +126,10 @@ body {
     min-width: 0;
     padding: 32px 40px;
     background-color: var(--bg-card);
-    position: relative; /* Added to anchor the pseudo-element */
+    position: relative;
 }
 
-/* Extends the agenda's background infinitely to the right */
+/* Extends the agenda's background to the right */
 .agenda::before {
     content: "";
     position: absolute;
@@ -160,3 +160,80 @@ body {
 .chevron { color: var(--text-muted); font-weight: bold; }
 .btn-add { width: 100%; background-color: var(--color-blue); color: white; border: none; border-radius: 8px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s ease; }
 .btn-add:hover { background-color: #0056e0; }
+
+
+/*TrainingPlan Form*/
+/* Container for the button and form */
+.add-workout-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* Expandable logic */
+.expandable-form {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+    background-color: var(--bg-main);
+    border-radius: 12px;
+}
+
+.add-workout-container.expanded .expandable-form {
+    max-height: 600px; /* Set high enough to fit the form content */
+    opacity: 1;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+/* Form element styling */
+.form-group {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.form-control {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    background-color: var(--bg-card);
+    color: var(--text-dark);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(0, 106, 255, 0.1);
+}
+
+/* Save Button */
+.btn-submit {
+    width: 100%;
+    background-color: var(--color-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 8px;
+}
+
+.btn-submit:hover {
+    background-color: #2ea749;
+}

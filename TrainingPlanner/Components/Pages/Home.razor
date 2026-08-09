@@ -116,9 +116,44 @@
                 }
             </div>
 
-            <button class="btn-add" onclick="">
-                + Add Workout
-            </button>
+            <div class="add-workout-container @(_isFormExpanded ? "expanded" : "")">
+                <button class="btn-add" @onclick="ToggleForm">
+                    @(_isFormExpanded ? "- Cancel" : "+ Add Workout")
+                </button>
+                
+                <div class="expandable-form">
+                    <EditForm Model="_newTrainingPlan" OnSubmit="SaveWorkout">
+                        <div class="form-group">
+                            <label>Workout Name</label>
+                            <InputText @bind-Value="_newTrainingPlan.Name" class="form-control" placeholder="e.g., Evening Run" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Date</label>
+                            <InputDate @bind-Value="_newTrainingPlan.Date" class="form-control" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Activity Type</label>
+                            <InputSelect @bind-Value="_newTrainingPlan.TrainingTypeId" class="form-control" required>
+                                <option value="0">Select a type...</option>
+                                @foreach (var type in _activityTypes)
+                                {
+                                    <option value="@type.Id">@type.Name</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <InputTextArea @bind-Value="_newTrainingPlan.Description" class="form-control" placeholder="Optional notes..." rows="3" />
+                        </div>
+
+                        <button type="submit" class="btn-submit">Save Plan</button>
+                    </EditForm>
+                </div>
+            </div>
+
         </main>
     </div>
 </div>
@@ -126,6 +161,8 @@
 @code {
     private const double SidebarMinWidth = 410;
     private const double SidebarMaxWidth = 700;
+    private bool _isFormExpanded = false;
+    private TrainingPlanDTO _newTrainingPlan = new() { Date = DateTime.Today };
 
     private DateTime _currentMonth = DateTime.Today;
     private DateTime _selectedDate = DateTime.Today;
@@ -143,6 +180,8 @@
 
     protected override void OnInitialized()
     {
+        
+
         SeedDummyData();
         GenerateCalendar();
     }
@@ -195,6 +234,7 @@
     private void SelectDate(DateTime date)
     {
         _selectedDate = date;
+        _isFormExpanded = false;
     }
 
     private void OnClickPreviousMonth()
@@ -210,7 +250,7 @@
     }
 
     private void OnClickToday() {
-        _selectedDate = DateTime.Today;
+        SelectDate(DateTime.Today);
         _currentMonth = _selectedDate;
         GenerateCalendar();
     }
@@ -242,6 +282,33 @@
         };
     }
 
+    private void ToggleForm()
+    {
+        _isFormExpanded = !_isFormExpanded;
+        if (_isFormExpanded)
+        {
+            _newTrainingPlan = new TrainingPlanDTO { Date = _selectedDate };
+        }
+    }
+    
+    private void SaveWorkout()
+    {
+        // Require a valid Training Type selection before saving
+        if (_newTrainingPlan.TrainingTypeId == 0) return;
+
+        // Map the selected TrainingTypeId to the actual TrainingTypeDTO object
+        _newTrainingPlan.TrainingType = _activityTypes.FirstOrDefault(t => t.Id == _newTrainingPlan.TrainingTypeId);
+        
+        // Add it to the master list
+        _trainingPlans.Add(_newTrainingPlan);
+        
+        // Close the form and reset the model
+        _isFormExpanded = false;
+        _newTrainingPlan = new TrainingPlanDTO { Date = _selectedDate };
+        
+        // Refresh the UI state
+        GenerateCalendar();
+    }
     private void SeedDummyData()
     {
         // Initialize Master Types
