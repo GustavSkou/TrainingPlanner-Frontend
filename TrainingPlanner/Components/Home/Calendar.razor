@@ -1,32 +1,12 @@
 @using TrainingPlanner.Models
-@using TrainingPlanner.Services.Contracts
-@inject ICalendarService CalendarService
 
-<style>
-    :root {
-        --color-blue: #006aff;
-        --color-green: #34c759;
-        --color-orange: #ff9500;
-        --color-red: #ff3b30;
-        --color-yellow: #ffcc00;
-        --bg-main: #f8f9fa;
-        --bg-card: #ffffff;
-        --text-dark: #1a1a1a;
-        --text-muted: #8e8e93;
-        --border-color: #e5e5ea;
-        --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --page-horizontal-padding: 0px;
-        --page-vertical-padding: 0px;
-        --sidebar-width: 410px;
-    }
-</style>
 <aside class="sidebar">
     <div class="calendar-header">
-        <h2>@_currentMonth.ToString("MMMM yyyy")</h2>
-        <button class="today-nav" @onclick="OnClickToday">Today</button>
+        <h2>@CurrentMonth.ToString("MMMM yyyy")</h2>
+        <button class="today-nav" @onclick="OnTodayClicked">Today</button>
         <div class="month-nav">
-            <button class="nav-btn" @onclick="OnClickPreviousMonth">&lt;</button>
-            <button class="nav-btn" @onclick="OnClickNextMonth">&gt;</button>
+            <button class="nav-btn" @onclick="OnPreviousMonthClicked">&lt;</button>
+            <button class="nav-btn" @onclick="OnNextMonthClicked">&gt;</button>
         </div>
     </div>
 
@@ -39,12 +19,11 @@
         <div class="day-name">Sat</div>
         <div class="day-name">Sun</div>
 
-        @foreach (var day in _calendarDays)
+        @foreach (var day in CalendarDays)
         {
             var plansForDay = GetPlansForDate(day.Date);
-            <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == _selectedDate ? "active" : "")"
-                    @onclick="() => SelectDate(day.Date)">
-
+            <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == SelectedDate ? "active" : "")"
+                 @onclick="() => OnSelectedDateChanged.InvokeAsync(day.Date)">
                 <div class="date-number">@day.Date.Day</div>
 
                 <div class="activity-dots">
@@ -59,10 +38,10 @@
 
     <div class="activity-guide">
         <div class="guide-legend">
-            @foreach (var activityType in _activityTypes)
+            @foreach (var activityType in ActivityTypes)
             {
                 <div class="guide-item @(activityType.Value.IsSelected ? "" : "inactive")"
-                        @onclick="() => ToggleActivityType(activityType.Value)">
+                     @onclick="() => OnToggleActivityType.InvokeAsync(activityType.Value)">
                     <div class="dot @activityType.Value.Name.ToLower()"></div> @activityType.Value.Name
                 </div>
             }
@@ -70,124 +49,38 @@
     </div>
 </aside>
 
-
 @code {
-    private const double SidebarMinWidth = 410;
-    private const double SidebarMaxWidth = 700;
-    private bool _isFormExpanded = false;
-    private TrainingPlanDTO _newTrainingPlan = new() { Date = DateTime.Today };
+    [Parameter] public DateTime CurrentMonth { get; set; }
+    [Parameter] public DateTime SelectedDate { get; set; }
+    [Parameter] public IReadOnlyList<CalendarDay> CalendarDays { get; set; } = Array.Empty<CalendarDay>();
+    [Parameter] public IReadOnlyDictionary<int, TrainingTypeDTO> ActivityTypes { get; set; } = new Dictionary<int, TrainingTypeDTO>();
+    [Parameter] public IReadOnlyList<TrainingPlanDTO> TrainingPlans { get; set; } = Array.Empty<TrainingPlanDTO>();
+    [Parameter] public EventCallback<DateTime> OnSelectedDateChanged { get; set; }
+    [Parameter] public EventCallback<DateTime> OnCurrentMonthChanged { get; set; }
+    [Parameter] public EventCallback<TrainingTypeDTO> OnToggleActivityType { get; set; }
 
-    private DateTime _currentMonth = DateTime.Today;
-    private DateTime _selectedDate = DateTime.Today;
-    private List<CalendarDay> _calendarDays = new();
-    private double _sidebarWidth = SidebarMinWidth;
-    private bool IsResizing;
-    private double _resizeStartX;
-    private double _resizeStartWidth;
-
-    private Dictionary<int, TrainingTypeDTO> _activityTypes = new();
-    private List<TrainingPlanDTO> _trainingPlans = new();
-
-    protected override async Task OnInitializedAsync()
+    private IReadOnlyList<TrainingPlanDTO> GetPlansForDate(DateTime date)
     {
-        var types = await CalendarService.GetTypesAsync();
-        if (types.Any())
-        {
-            _activityTypes = types.ToDictionary(t => t.Id, t => t);
-        }
-
-        SeedDummyData();
-        GenerateCalendar();
-    }
-
-    private void GenerateCalendar()
-    {
-        _calendarDays.Clear();
-
-        var firstDayOfMonth = new DateTime(_currentMonth.Year, _currentMonth.Month, day: 1);
-        var daysInMonth = DateTime.DaysInMonth(_currentMonth.Year, _currentMonth.Month);
-        var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek - 1;
-        var startDate = firstDayOfMonth.AddDays(-startDayOfWeek);
-
-        for (int i = 0; i < 42; i++)
-        {
-            var date = startDate.AddDays(i);
-            _calendarDays.Add(new CalendarDay
-            {
-                Date = date,
-                IsCurrentMonth = date.Month == _currentMonth.Month
-            });
-        }
-    }
-
-    private void SelectDate(DateTime date)
-    {
-        _selectedDate = date;
-        _isFormExpanded = false;
-    }
-
-    private void OnClickPreviousMonth()
-    {
-        _currentMonth = _currentMonth.AddMonths(-1);
-        GenerateCalendar();
-    }
-
-    private void OnClickNextMonth()
-    {
-        _currentMonth = _currentMonth.AddMonths(1);
-        GenerateCalendar();
-    }
-
-    private void OnClickToday()
-    {
-        SelectDate(DateTime.Today);
-        _currentMonth = _selectedDate;
-        GenerateCalendar();
-    }
-
-    private void ToggleActivityType(TrainingTypeDTO activityType)
-    {
-        activityType.IsSelected = !activityType.IsSelected;
-    }
-
-    private List<TrainingPlanDTO> GetPlansForDate(DateTime date)
-    {
-        return _trainingPlans
+        return TrainingPlans
             .Where(p => p.Date.Date == date.Date &&
-                       (p.TrainingType == null || p.TrainingType.IsSelected))
+                        (p.TrainingType == null || p.TrainingType.IsSelected))
             .ToList();
     }
 
-    private void SeedDummyData()
+    private Task OnPreviousMonthClicked()
     {
-        _trainingPlans = new List<TrainingPlanDTO>
-        {
-            new TrainingPlanDTO
-            {
-                Date = new DateTime(2026, 8, 12),
-                Name = "Morning Routine",
-                TrainingType = _activityTypes[1],
-                Workout = new WorkoutDTO { Name = "Morning Run", DistanceMeters = 5200, DurationMinutes = 28 }
-            },
-            new TrainingPlanDTO
-            {
-                Date = new DateTime(2026, 8, 12),
-                Name = "Afternoon Swim",
-                TrainingType = _activityTypes[3],
-                Workout = new WorkoutDTO { Name = "Pool Swim", DistanceMeters = 1500, DurationMinutes = 35 }
-            },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 4), Name = "Cycling", TrainingType = _activityTypes[2] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Run", TrainingType = _activityTypes[1] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Weights", TrainingType = _activityTypes[4] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 8), Name = "Weights", TrainingType = _activityTypes[4] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 11), Name = "Cycling", TrainingType = _activityTypes[2] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 14), Name = "Weights", TrainingType = _activityTypes[4] },
-        };
+        return OnCurrentMonthChanged.InvokeAsync(CurrentMonth.AddMonths(-1));
     }
 
-    private class CalendarDay
+    private Task OnNextMonthClicked()
     {
-        public DateTime Date { get; set; }
-        public bool IsCurrentMonth { get; set; }
+        return OnCurrentMonthChanged.InvokeAsync(CurrentMonth.AddMonths(1));
+    }
+
+    private Task OnTodayClicked()
+    {
+        return Task.WhenAll(
+            OnSelectedDateChanged.InvokeAsync(DateTime.Today),
+            OnCurrentMonthChanged.InvokeAsync(DateTime.Today));
     }
 }

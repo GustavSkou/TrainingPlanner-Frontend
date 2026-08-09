@@ -1,11 +1,9 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 @using TrainingPlanner.Models
-
 @using TrainingPlanner.Services.Contracts
+@using TrainingPlanner.Components.Home;
 @inject ICalendarService CalendarService
-@inject IAgendaService AgendaService
-
 
 <style>
     :root {
@@ -28,56 +26,14 @@
 
 <div class="app-window @(IsResizing ? "resizing" : "")" style="@AppWindowStyle" @onpointermove="OnPointerMove" @onpointerup="StopResizing" @onpointercancel="StopResizing">
     <div class="app-content">
-        <aside class="sidebar">
-            <div class="calendar-header">
-                <h2>@_currentMonth.ToString("MMMM yyyy")</h2>
-                <button class="today-nav" @onclick="OnClickToday">Today</button>
-                <div class="month-nav">
-                    <button class="nav-btn" @onclick="OnClickPreviousMonth">&lt;</button>
-                    <button class="nav-btn" @onclick="OnClickNextMonth">&gt;</button>
-                </div>
-            </div>
-
-            <div class="calendar-grid">
-                
-                <div class="day-name">Mon</div>
-                <div class="day-name">Tue</div>
-                <div class="day-name">Wed</div>
-                <div class="day-name">Thu</div>
-                <div class="day-name">Fri</div>
-                <div class="day-name">Sat</div>
-                <div class="day-name">Sun</div>
-
-                @foreach (var day in _calendarDays)
-                {
-                    var plansForDay = GetPlansForDate(day.Date);
-                    <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == _selectedDate ? "active" : "")" 
-                         @onclick="() => SelectDate(day.Date)">
-                        
-                        <div class="date-number">@day.Date.Day</div>
-                        
-                        <div class="activity-dots">
-                            @foreach (var plan in plansForDay)
-                            {
-                                <div class="dot @plan.TrainingType?.Name.ToLower()"></div>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="activity-guide">
-                <div class="guide-legend">
-                    @foreach (var activityType in _activityTypes)
-                    {
-                        <div class="guide-item @(activityType.Value.IsSelected ? "" : "inactive")" 
-                             @onclick="() => ToggleActivityType(activityType.Value)">
-                            <div class="dot @activityType.Value.Name.ToLower()"></div> @activityType.Value.Name
-                        </div>
-                    }
-                </div>
-            </div>
-        </aside>
+        <Calendar CurrentMonth="_currentMonth"
+                  SelectedDate="_selectedDate"
+                  CalendarDays="_calendarDays"
+                  ActivityTypes="_activityTypes"
+                  TrainingPlans="_trainingPlans"
+                  OnSelectedDateChanged="SelectDate"
+                  OnCurrentMonthChanged="SetCurrentMonth"
+                  OnToggleActivityType="ToggleActivityType" />
 
         <div class="resize-handle"
              @onpointerdown="StartResizing"
@@ -85,82 +41,17 @@
              @onpointercancel="StopResizing"
              title="Drag to resize"></div>
 
-        <main class="agenda">
-            <div class="agenda-header">
-                <h1>@_selectedDate.ToString("dddd, MMMM d")</h1>
-                @{
-                    var selectedPlans = GetPlansForDate(_selectedDate);
-                    var workoutText = selectedPlans.Count == 1 ? "workout" : "workouts";
-                }
-                <p>Today &bull; @selectedPlans.Count @workoutText scheduled</p>
-            </div>
-
-            <div class="workout-list">
-                @if (selectedPlans.Any())
-                {
-                    @foreach (var plan in selectedPlans)
-                    {
-                        <div class="workout-card">
-                            <div class="workout-indicator @plan.TrainingType?.Name.ToLower()"></div>
-                            <div class="workout-details">
-                                <div class="workout-title">@(plan.Workout?.Name ?? plan.Name)</div>
-                                <div class="workout-metrics">
-                                    @if (plan.Workout != null)
-                                    {
-                                        @($"{(plan.Workout.DistanceMeters / 1000.0):0.0} km \u2022 {plan.Workout.DurationMinutes} min")
-                                    }
-                                </div>
-                            </div>
-                            <div class="chevron">&gt;</div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="workout-metrics" style="padding: 16px 0;">No workouts scheduled (or filtered out).</div>
-                }
-            </div>
-
-            <div class="add-workout-container @(_isFormExpanded ? "expanded" : "")">
-                <button class="btn-add" @onclick="ToggleForm">
-                    @(_isFormExpanded ? "- Cancel" : "+ Add Workout")
-                </button>
-                
-                <div class="expandable-form">
-                    <EditForm Model="_newTrainingPlan" OnSubmit="SaveWorkout">
-                        <div class="form-group">
-                            <label>Workout Name</label>
-                            <InputText @bind-Value="_newTrainingPlan.Name" class="form-control" placeholder="e.g., Evening Run" />
-                        </div>
-
-                        <div class="form-group">
-                            <label>Activity Type</label>
-                            <InputSelect @bind-Value="_newTrainingPlan.TrainingTypeId" class="form-control" required>
-                                <option value="0">Select a type...</option>
-                                @foreach (var type in _activityTypes) {
-                                    <option value="@type.Value.Id">@type.Value.Name</option>
-                                }
-                            </InputSelect>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Description</label>
-                            <InputTextArea @bind-Value="_newTrainingPlan.Description" class="form-control" placeholder="Optional notes..." rows="3" />
-                        </div>
-
-                        <button type="submit" class="btn-submit">Save Plan</button>
-                    </EditForm>
-                </div>
-            </div>
-        </main>
+        <Agenda SelectedDate="_selectedDate"
+                SelectedPlans="GetSelectedPlans()"
+                GenerateCalendar="GenerateCalendar()"
+                ActivityTypes="_activityTypes" 
+                TrainingPlans="_trainingPlans"/>
     </div>
 </div>
 
 @code {
     private const double SidebarMinWidth = 410;
     private const double SidebarMaxWidth = 700;
-    private bool _isFormExpanded = false;
-    private TrainingPlanDTO _newTrainingPlan = new() { Date = DateTime.Today };
 
     private DateTime _currentMonth = DateTime.Today;
     private DateTime _selectedDate = DateTime.Today;
@@ -169,16 +60,12 @@
     private bool IsResizing;
     private double _resizeStartX;
     private double _resizeStartWidth;
-
-    // Master list of available activity types
     private Dictionary<int, TrainingTypeDTO> _activityTypes = new();
-
-    // Master list of training plans
     private List<TrainingPlanDTO> _trainingPlans = new();
 
-    protected async override void OnInitialized()
-    {
-        var types = await CalendarService.GetTypesAsync();
+    protected override async Task OnInitializedAsync()
+{
+        IReadOnlyList<TrainingTypeDTO>? types = await CalendarService.GetTypesAsync();
         _activityTypes = types.ToDictionary(t => t.Id, t => t);
 
         SeedDummyData();
@@ -210,13 +97,25 @@
         IsResizing = false;
     }
 
-    private void GenerateCalendar()
+    private Task SetCurrentMonth(DateTime month)
+    {
+        _currentMonth = month;
+        GenerateCalendar();
+        return Task.CompletedTask;
+    }
+
+    private Task SelectDate(DateTime date)
+    {
+        _selectedDate = date;
+        return Task.CompletedTask;
+    }
+
+    private Task GenerateCalendar()
     {
         _calendarDays.Clear();
 
         var firstDayOfMonth = new DateTime(_currentMonth.Year, _currentMonth.Month, day: 1);
-        var daysInMonth = DateTime.DaysInMonth(_currentMonth.Year, _currentMonth.Month);
-        var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek - 1; // week through mon - sun
+        var startDayOfWeek = (int)firstDayOfMonth.DayOfWeek - 1;
         var startDate = firstDayOfMonth.AddDays(-startDayOfWeek);
 
         for (int i = 0; i < 42; i++)
@@ -228,87 +127,26 @@
                 IsCurrentMonth = date.Month == _currentMonth.Month
             });
         }
-    }
-
-    private void SelectDate(DateTime date)
-    {
-        _selectedDate = date;
-        _isFormExpanded = false;
-    }
-
-    private void OnClickPreviousMonth()
-    {
-        _currentMonth = _currentMonth.AddMonths(-1);
-        GenerateCalendar();
-    }
-
-    private void OnClickNextMonth()
-    {
-        _currentMonth = _currentMonth.AddMonths(1);
-        GenerateCalendar();
-    }
-
-    private void OnClickToday() {
-        SelectDate(DateTime.Today);
-        _currentMonth = _selectedDate;
-        GenerateCalendar();
+        return Task.CompletedTask;
     }
 
     private void ToggleActivityType(TrainingTypeDTO activityType)
     {
-        // Toggle the IsSelected property that was defined in TrainingTypeDTO
         activityType.IsSelected = !activityType.IsSelected;
     }
 
-    private List<TrainingPlanDTO> GetPlansForDate(DateTime date)
+    private IReadOnlyList<TrainingPlanDTO> GetSelectedPlans()
     {
-        // We only return plans for the specified date WHERE the associated TrainingType is currently selected/active.
         return _trainingPlans
-            .Where(p => p.Date.Date == date.Date && 
+            .Where(p => p.Date.Date == _selectedDate.Date &&
                        (p.TrainingType == null || p.TrainingType.IsSelected))
             .ToList();
     }
 
-    private void ToggleForm()
-    {
-        _isFormExpanded = !_isFormExpanded;
-        if (_isFormExpanded)
-        {
-            _newTrainingPlan = new TrainingPlanDTO { Date = _selectedDate };
-        }
-    }
-
-    private void SaveWorkout()
-    {
-        try {
-            // Require a valid Training Type selection before saving
-            if (_newTrainingPlan.TrainingTypeId == 0) 
-                return;
-
-            _newTrainingPlan.TrainingType = _activityTypes[_newTrainingPlan.TrainingTypeId];
-
-            if (string.IsNullOrEmpty(_newTrainingPlan.Name)) {
-                _newTrainingPlan.Name = _newTrainingPlan.TrainingType.Name;
-            }
-
-            _trainingPlans.Add(_newTrainingPlan);
-
-            // Close the form and reset the model
-            _isFormExpanded = false;
-            _newTrainingPlan = new TrainingPlanDTO { Date = _selectedDate };
-
-        } catch (Exception) {
-
-        } finally {
-            GenerateCalendar();
-        }
-    }
     private void SeedDummyData()
     {
-        // Seed Training Plans
         _trainingPlans = new List<TrainingPlanDTO>
         {
-            // August 12
             new TrainingPlanDTO
             {
                 Date = new DateTime(2026, 8, 12),
@@ -323,28 +161,12 @@
                 TrainingType = _activityTypes[3],
                 Workout = new WorkoutDTO { Name = "Pool Swim", DistanceMeters = 1500, DurationMinutes = 35 }
             },
-            
-            // August 4 (Cycling)
             new TrainingPlanDTO { Date = new DateTime(2026, 8, 4), Name = "Cycling", TrainingType = _activityTypes[2] },
-            
-            // August 6 (Running, Strength)
             new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Run", TrainingType = _activityTypes[1] },
             new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Weights", TrainingType = _activityTypes[4] },
-            
-            // August 8 (Strength)
             new TrainingPlanDTO { Date = new DateTime(2026, 8, 8), Name = "Weights", TrainingType = _activityTypes[4] },
-            
-            // August 11 (Cycling)
             new TrainingPlanDTO { Date = new DateTime(2026, 8, 11), Name = "Cycling", TrainingType = _activityTypes[2] },
-            
-            // August 14 (Strength)
             new TrainingPlanDTO { Date = new DateTime(2026, 8, 14), Name = "Weights", TrainingType = _activityTypes[4] },
         };
-    }
-
-    private class CalendarDay
-    {
-        public DateTime Date { get; set; }
-        public bool IsCurrentMonth { get; set; }
     }
 }
