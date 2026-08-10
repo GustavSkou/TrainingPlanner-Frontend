@@ -8,7 +8,9 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    permissions:
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Hent koden
@@ -19,14 +21,23 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Byg og klargør projektet (Publish)
-        run: |
-          dotnet build --configuration Release
-          dotnet publish -c Release -o "${{ env.DOTNET_ROOT }}/myapp"
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
+
+      - name: dotnet publish
+        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
 
       - name: Deploy til Azure App Service
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'dit-app-service-navn' # <-- Husk at rette dette til navnet på din Azure App Service
+          app-name: 'TrainingPlanner'
+          slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
           package: ${{ env.DOTNET_ROOT }}/myapp
