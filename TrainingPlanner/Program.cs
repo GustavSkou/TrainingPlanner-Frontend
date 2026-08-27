@@ -2,7 +2,7 @@ using TrainingPlanner.Components;
 using TrainingPlanner.Services.Api;
 using TrainingPlanner.Services.Contracts;
 using TrainingPlanner.Services.Implementation;
-
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +20,8 @@ builder.Services.AddHttpClient<ITrainingPlannerApiClient, TrainingPlannerApiClie
 builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IAgendaService, AgendaService>();
 
+// Configure authentication and related services before building the app
+AddAuthentication(builder);
 
 var app = builder.Build();
 
@@ -30,14 +32,42 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGet("/login", () => Results.Challenge(
+    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
+    new List<string> { "GitHub" }));
+    
+app.MapGet("/logout", () => Results.SignOut(
+    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
+    new List<string> { CookieAuthenticationDefaults.AuthenticationScheme }));
+
 app.Run();
 //
+
+static void AddAuthentication(WebApplicationBuilder builder)
+{
+    // Tilføj den indbyggede state provider til Blazor UI'et
+    builder.Services.AddCascadingAuthenticationState();
+
+    builder.Services.AddAuthentication(options => {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = "GitHub";
+    })
+    .AddCookie()
+    .AddGitHub(options => {
+        options.ClientId = builder.Configuration["GitHub:ClientId"];
+        options.ClientSecret = builder.Configuration["GitHub:ClientSecret"];
+        // GitHub kræver en callback path, standard er /signin-github
+        options.CallbackPath = "/signin-github"; 
+    });
+}
