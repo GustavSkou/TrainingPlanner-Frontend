@@ -73,4 +73,3 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
-TrainingPlanner/Properties/launchSettings.json
