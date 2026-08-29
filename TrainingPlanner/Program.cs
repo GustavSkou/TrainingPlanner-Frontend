@@ -21,6 +21,13 @@ builder.Services.AddHttpClient<ITrainingPlannerApiClient, TrainingPlannerApiClie
 builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IAgendaService, AgendaService>();
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear(); 
+    options.KnownProxies.Clear();
+});
+
 // Configure authentication and related services before building the app
 AddAuthentication(builder);
 
@@ -36,12 +43,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
-});
+
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
