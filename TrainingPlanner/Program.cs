@@ -5,7 +5,13 @@ using TrainingPlanner.Services.Implementation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
+
+if(!IsSecretSet(builder.Configuration)) {
+    throw new Exception("user-secrets is not setup correctly");
+}
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -55,7 +61,9 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+
 app.MapGet("/login", () => Results.Challenge(
+    
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
     new List<string> { "GitHub" }));
     
@@ -65,7 +73,7 @@ app.MapGet("/logout", () => Results.SignOut(
 
 app.Run();
 //
-
+    
 static void AddAuthentication(WebApplicationBuilder builder)
 {
     // Tilføj den indbyggede state provider til Blazor UI'et
@@ -82,4 +90,12 @@ static void AddAuthentication(WebApplicationBuilder builder)
         // GitHub kræver en callback path, standard er /signin-github
         options.CallbackPath = "/signin-github"; 
     });
+}
+
+static bool IsSecretSet(IConfiguration configuration)
+{
+    if (string.IsNullOrEmpty(configuration["GitHub:ClientId"]) || string.IsNullOrEmpty(configuration["GitHub:ClientSecret"])) {
+        return false;
+    }
+    return true;
 }
