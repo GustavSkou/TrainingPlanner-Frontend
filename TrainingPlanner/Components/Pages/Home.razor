@@ -1,5 +1,6 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
 @using TrainingPlanner.Models
 @using TrainingPlanner.Services.Contracts
 @using TrainingPlanner.Components.Home;
@@ -24,31 +25,38 @@
     }
 </style>
 
-<div class="app-window @(IsResizing ? "resizing" : "")" style="@AppWindowStyle" @onpointermove="OnPointerMove" @onpointerup="StopResizing" @onpointercancel="StopResizing">
-    <div class="app-content">
-        <Calendar CurrentMonth="_currentMonth"
-                  SelectedDate="_selectedDate"
-                  CalendarDays="_calendarDays"
-                  ActivityTypes="_activityTypes"
-                  TrainingPlans="_trainingPlans"
-                  OnSelectedDateChanged="SelectDate"
-                  OnCurrentMonthChanged="SetCurrentMonth"
-                  OnToggleActivityType="ToggleActivityType" />
+<AuthorizeView>
+    <Authorized>
+    <div class="app-window @(IsResizing ? "resizing" : "")" style="@AppWindowStyle" @onpointermove="OnPointerMove" @onpointerup="StopResizing" @onpointercancel="StopResizing">
+        <div class="app-content">
+            <Calendar CurrentMonth="_currentMonth"
+                    SelectedDate="_selectedDate"
+                    CalendarDays="_calendarDays"
+                    ActivityTypes="_activityTypes"
+                    TrainingPlans="_trainingPlans"
+                    OnSelectedDateChanged="SelectDate"
+                    OnCurrentMonthChanged="SetCurrentMonth"
+                    OnToggleActivityType="ToggleActivityType" />
 
-        <div class="resize-handle"
-             @onpointerdown="StartResizing"
-             @onpointerup="StopResizing"
-             @onpointercancel="StopResizing"
-             title="Drag to resize"></div>
+            <div class="resize-handle"
+                @onpointerdown="StartResizing"
+                @onpointerup="StopResizing"
+                @onpointercancel="StopResizing"
+                title="Drag to resize"></div>
 
-        <Agenda SelectedDate="_selectedDate"
-                SelectedPlans="GetSelectedPlans()"
-                GenerateCalendar="GenerateCalendar()"
-                ActivityTypes="_activityTypes" 
-                TrainingPlans="_trainingPlans"/>
+            <Agenda SelectedDate="_selectedDate"
+                    SelectedPlans="GetSelectedPlans()"
+                    GenerateCalendar="GenerateCalendar()"
+                    ActivityTypes="_activityTypes" 
+                    TrainingPlans="_trainingPlans"/>
+        </div>
     </div>
-</div>
-
+    </Authorized>
+        
+    <NotAuthorized>
+        <Login/>
+    </NotAuthorized>
+</AuthorizeView>
 @code {
     private const double SidebarMinWidth = 410;
     private const double SidebarMaxWidth = 700;

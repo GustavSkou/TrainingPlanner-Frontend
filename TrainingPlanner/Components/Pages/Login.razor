@@ -1,0 +1,20 @@
+@inject NavigationManager _navigation
+
+<div class="login-container">
+    <div class="login-header">
+        <h2>Login</h2>
+    </div>
+
+    <div class="login-options">
+        <button type="button" @onclick="RedirectToGitHubLogin">
+            <svg class="github-img"></svg>
+            Login via GitHub
+        </button>
+    </div>
+</div>
+
+@code{
+    private void RedirectToGitHubLogin(){
+        _navigation.NavigateTo("/login/github");
+    }
+}

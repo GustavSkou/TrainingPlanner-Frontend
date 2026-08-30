@@ -62,7 +62,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 
-app.MapGet("/login", () => Results.Challenge(
+app.MapGet("/login/github", () => Results.Challenge(
     
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
     new List<string> { "GitHub" }));
@@ -73,7 +73,7 @@ app.MapGet("/logout", () => Results.SignOut(
 
 app.Run();
 //
-    
+
 static void AddAuthentication(WebApplicationBuilder builder)
 {
     // Tilføj den indbyggede state provider til Blazor UI'et
