@@ -1,5 +1,8 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@inject NavigationManager _navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
 @using Microsoft.AspNetCore.Components.Authorization
 @using TrainingPlanner.Models
 @using TrainingPlanner.Services.Contracts
@@ -57,6 +60,8 @@
         <Login/>
     </NotAuthorized>
 </AuthorizeView>
+
+
 @code {
     private const double SidebarMinWidth = 410;
     private const double SidebarMaxWidth = 700;
@@ -72,7 +77,18 @@
     private List<TrainingPlanDTO> _trainingPlans = new();
 
     protected override async Task OnInitializedAsync()
-{
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        if (authState == null || 
+            authState.User == null || 
+            authState.User.Identity == null || 
+            !authState.User.Identity.IsAuthenticated) 
+        {
+            _navigation.NavigateTo("login");
+            return;
+        }
+
         IReadOnlyList<TrainingTypeDTO>? types = await CalendarService.GetTypesAsync();
         _activityTypes = types.ToDictionary(t => t.Id, t => t);
 

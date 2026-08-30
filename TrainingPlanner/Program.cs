@@ -49,8 +49,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-
-
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -68,7 +66,7 @@ app.MapGet("/login/github", () => Results.Challenge(
     new List<string> { "GitHub" }));
     
 app.MapGet("/logout", () => Results.SignOut(
-    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
+    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/login" },
     new List<string> { CookieAuthenticationDefaults.AuthenticationScheme }));
 
 app.Run();
