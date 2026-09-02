@@ -1,6 +1,8 @@
 @page "/register"
 @rendermode InteractiveServer
 @inject NavigationManager _navigation
+@inject IUserService _userService
+
 
 <div class="login-shell">
     <div class="login-panel">
@@ -122,6 +124,10 @@
 @code {
     private void RedirectToGitHubLogin()
     {
-        _navigation.NavigateTo("/login/github");
+        _navigation.NavigateTo("/register/github");
+    }
+
+    private void HandleRegister() {
+
     }
 }

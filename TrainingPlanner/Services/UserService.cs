@@ -10,8 +10,8 @@ public sealed class UserService(ITrainingPlannerApiClient apiClient) : IUserServ
 
     public async Task CreateUser(UserDTO user, CancellationToken cancellationToken = default)
     {
-        //await _apiClient.PostAsync();
-        throw new NotImplementedException();
+        
+        UserDTO result = await _apiClient.PostAsync<UserDTO, UserDTO>("/users", user, cancellationToken);
     }
 
     public Task<UserDTO> GetUserByEMail(string eMail, CancellationToken cancellationToken = default)

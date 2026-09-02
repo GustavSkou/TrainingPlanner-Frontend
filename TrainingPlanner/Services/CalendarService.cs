@@ -24,7 +24,7 @@ public sealed class CalendarService(ITrainingPlannerApiClient apiClient) : ICale
     {
         try
         {
-            IReadOnlyList<TrainingTypeDTO>? categories = await apiClient.GetAsync<List<TrainingTypeDTO>>("http://localhost:5001/types", cancellationToken);
+            IReadOnlyList<TrainingTypeDTO>? categories = await apiClient.GetAsync<List<TrainingTypeDTO>>("types", cancellationToken);
             return categories ?? FallbackCategories;
         }
         catch (HttpRequestException)

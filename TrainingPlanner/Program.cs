@@ -17,15 +17,17 @@ if(!IsSecretSet(builder.Configuration)) {
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-var apiBaseUrl = builder.Configuration.GetValue<string>("Api:BaseUrl") ?? "https://localhost:5001/";
+var apiBaseUrl = builder.Configuration["Api:BaseUrl"] ?? "https://localhost:5001/";
 
 builder.Services.AddHttpClient<ITrainingPlannerApiClient, TrainingPlannerApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl, UriKind.Absolute);
+    client.DefaultRequestHeaders.Add("API-KEY", builder.Configuration["API-KEY"]);
 });
 
 builder.Services.AddScoped<ICalendarService, CalendarService>();
 builder.Services.AddScoped<IAgendaService, AgendaService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -68,6 +70,11 @@ app.MapGet("/login/github", () => Results.Challenge(
 app.MapGet("/logout", () => Results.SignOut(
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/login" },
     new List<string> { CookieAuthenticationDefaults.AuthenticationScheme }));
+
+app.MapGet("/register/github", () => Results.Challenge(
+    
+    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/login" },
+    new List<string> { "GitHub" }));
 
 app.Run();
 //
