@@ -11,4 +11,9 @@ public sealed class TrainingPlannerApiClient(HttpClient httpClient) : ITrainingP
 
         return await response.Content.ReadFromJsonAsync<T>(cancellationToken: cancellationToken);
     }
+
+    public Task<T?> PostAsync<T>(string requestUri, T content, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
