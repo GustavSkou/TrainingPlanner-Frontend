@@ -9,7 +9,7 @@ public sealed class CalendarService(ITrainingPlannerApiClient apiClient) : ICale
 {
     private static readonly IReadOnlyList<TrainingTypeDTO> FallbackCategories =
     [
-        new TrainingTypeDTO(1, "Running", "" ),
+        new TrainingTypeDTO(1, "<TEST>", "" ),
         new TrainingTypeDTO(2, "Cycling", "" ),
         new TrainingTypeDTO(3, "Swimming", "" ),
         new TrainingTypeDTO(4, "Workout", "")
@@ -25,7 +25,7 @@ public sealed class CalendarService(ITrainingPlannerApiClient apiClient) : ICale
         try
         {
             IReadOnlyList<TrainingTypeDTO>? categories = await apiClient.GetAsync<List<TrainingTypeDTO>>("types", cancellationToken);
-            return categories ?? FallbackCategories;
+            return categories;
         }
         catch (HttpRequestException)
         {

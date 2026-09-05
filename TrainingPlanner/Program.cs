@@ -9,10 +9,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if(!IsSecretSet(builder.Configuration)) {
-    throw new Exception("user-secrets is not setup correctly");
-}
-
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -32,7 +28,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear(); 
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -63,18 +59,31 @@ app.MapRazorComponents<App>()
 
 
 app.MapGet("/login/github", () => Results.Challenge(
-    
+
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
     new List<string> { "GitHub" }));
-    
+
 app.MapGet("/logout", () => Results.SignOut(
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/login" },
     new List<string> { CookieAuthenticationDefaults.AuthenticationScheme }));
 
-app.MapGet("/register/github", () => Results.Challenge(
-    
-    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/login" },
-    new List<string> { "GitHub" }));
+app.MapGet("/register/github", (string firstName, string lastName) =>
+{
+    if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+    {
+        return Results.Redirect("/register");
+    }
+
+    var properties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+    {
+        RedirectUri = "/login"
+    };
+    properties.Items["registration:flow"] = "true";
+    properties.Items["registration:firstName"] = firstName.Trim();
+    properties.Items["registration:lastName"] = lastName.Trim();
+
+    return Results.Challenge(properties, new List<string> { "GitHub" });
+});
 
 app.Run();
 //
@@ -84,22 +93,64 @@ static void AddAuthentication(WebApplicationBuilder builder)
     // Tilføj den indbyggede state provider til Blazor UI'et
     builder.Services.AddCascadingAuthenticationState();
 
-    builder.Services.AddAuthentication(options => {
+    builder.Services.AddAuthentication(options =>
+    {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = "GitHub";
     })
     .AddCookie()
-    .AddGitHub(options => {
+    .AddGitHub(options =>
+    {
         options.ClientId = builder.Configuration["GitHub:ClientId"];
         options.ClientSecret = builder.Configuration["GitHub:ClientSecret"];
         // GitHub kræver en callback path, standard er /signin-github
-        options.CallbackPath = "/signin-github"; 
+        options.CallbackPath = "/signin-github";
+        options.Events.OnCreatingTicket = async context =>
+        {
+            if (!context.Properties.Items.TryGetValue("registration:flow", out string? registrationFlow) ||
+                !string.Equals(registrationFlow, "true", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            context.Properties.Items.TryGetValue("registration:firstName", out string? firstName);
+            context.Properties.Items.TryGetValue("registration:lastName", out string? lastName);
+
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            {
+                return;
+            }
+
+            string? email = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            string? nameIdentifier = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(nameIdentifier))
+            {
+                return;
+            }
+
+            IUserService userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
+
+            //Console.WriteLine("HEERR");
+
+
+            await userService.CreateUser(new TrainingPlanner.Models.UserDTO
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                Email = email,
+                LoginProvider = "github",
+                NameIdentifier = nameIdentifier,
+                CreatedAt = DateTime.UtcNow
+            });
+        };
     });
 }
 
 static bool IsSecretSet(IConfiguration configuration)
 {
-    if (string.IsNullOrEmpty(configuration["GitHub:ClientId"]) || string.IsNullOrEmpty(configuration["GitHub:ClientSecret"])) {
+    if (string.IsNullOrEmpty(configuration["GitHub:ClientId"]) || string.IsNullOrEmpty(configuration["GitHub:ClientSecret"]))
+    {
         return false;
     }
     return true;

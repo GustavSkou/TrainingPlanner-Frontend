@@ -8,6 +8,9 @@
         "applicationUrl": "http://localhost:1234",
         "environmentVariables": {
           "ASPNETCORE_ENVIRONMENT": "Development"
+        },
+        "Api": {
+          "BaseUrl": "https://trainingplanner-backend-g4d8dagcc5cdgwgh.denmarkeast-01.azurewebsites.net/"
         }
       },
       "https": {
