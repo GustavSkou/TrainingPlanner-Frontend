@@ -47,11 +47,11 @@
                 @onpointercancel="StopResizing"
                 title="Drag to resize"></div>
 
-            <Agenda SelectedDate="_selectedDate"
-                    SelectedPlans="GetSelectedPlans()"
-                    GenerateCalendar="GenerateCalendar()"
-                    ActivityTypes="_activityTypes" 
-                    TrainingPlans="_trainingPlans"/>
+            <Agenda             SelectedDate="_selectedDate"
+            SelectedPlans="GetSelectedPlans()"
+            ActivityTypes="_activityTypes" 
+            TrainingPlans="_trainingPlans"
+            OnWorkoutSaved="RefreshAgenda" />
         </div>
     </div>
     </Authorized>
@@ -132,6 +132,12 @@
     {
         _selectedDate = date;
         return Task.CompletedTask;
+    }
+
+    private Task RefreshAgenda()
+    {
+        GenerateCalendar();
+        return InvokeAsync(StateHasChanged);
     }
 
     private Task GenerateCalendar()

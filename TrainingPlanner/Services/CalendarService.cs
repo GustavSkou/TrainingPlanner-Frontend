@@ -15,17 +15,22 @@ public sealed class CalendarService(ITrainingPlannerApiClient apiClient) : ICale
         new TrainingTypeDTO(4, "Workout", "")
     ];
 
-    public Task<IReadOnlyList<TrainingPlanDTO>> GetTrainingPlansAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrainingPlanDTO>> GetTrainingPlansAsync(
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        IReadOnlyList<TrainingPlanDTO>? plans =
+            await apiClient.GetAsync<List<TrainingPlanDTO>>("plans", cancellationToken);
+
+        return plans ?? Array.Empty<TrainingPlanDTO>();
     }
 
     public async Task<IReadOnlyList<TrainingTypeDTO>> GetTypesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            IReadOnlyList<TrainingTypeDTO>? categories = await apiClient.GetAsync<List<TrainingTypeDTO>>("types", cancellationToken);
-            return categories;
+            IReadOnlyList<TrainingTypeDTO>? categories =
+                await apiClient.GetAsync<List<TrainingTypeDTO>>("types", cancellationToken);
+            return categories ?? FallbackCategories;
         }
         catch (HttpRequestException)
         {

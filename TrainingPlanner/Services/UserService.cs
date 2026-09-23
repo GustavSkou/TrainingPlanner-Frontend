@@ -23,9 +23,24 @@ public sealed class UserService(ITrainingPlannerApiClient apiClient) : IUserServ
         return result;
     }
 
-    public Task<UserDTO> GetUserByEMail(string eMail, CancellationToken cancellationToken = default)
+    public async Task<UserDTO> GetUserByEMail(
+        string eMail,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(eMail))
+        {
+            throw new ArgumentException("An email address is required.", nameof(eMail));
+        }
+
+        string requestUri = $"users?email={Uri.EscapeDataString(eMail.Trim())}";
+        UserDTO? user = await _apiClient.GetAsync<UserDTO>(requestUri, cancellationToken);
+
+        if (user is null)
+        {
+            throw new InvalidOperationException("The API did not return a user.");
+        }
+
+        return user;
     }
 
     private bool IsUserValid(UserDTO user)

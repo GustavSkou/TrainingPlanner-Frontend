@@ -11,7 +11,7 @@ namespace TrainingPlanner.Models
         public string? Description { get; set; }
         public DateTime Date { get; set; }
         public TrainingTypeDTO? TrainingType { get; set; }
-        public WorkoutDTO Workout { get; set; }
+        public WorkoutDTO Workout { get; set; } = new();
 
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

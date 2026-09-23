@@ -17,6 +17,6 @@ public sealed class TrainingPlannerApiClient(HttpClient httpClient) : ITrainingP
         using HttpResponseMessage response = await httpClient.PostAsJsonAsync(requestPath, content, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        return await response.Content.ReadFromJsonAsync<TResponse>();
+        return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
     }
 }

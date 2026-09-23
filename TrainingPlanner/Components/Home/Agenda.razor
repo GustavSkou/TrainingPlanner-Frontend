@@ -1,9 +1,11 @@
 @using TrainingPlanner.Models
+@using TrainingPlanner.Services.Contracts
+@inject IAgendaService AgendaService
 
 <main class="agenda">
     <div class="agenda-header">
         <h1>@SelectedDate.ToString("dddd, MMMM d")</h1>
-        <p>Today &bull; @SelectedPlans.Count @workoutText scheduled</p>
+        <p>@SelectedPlans.Count @workoutText scheduled</p>
     </div>
 
     <div class="workout-list">
@@ -14,11 +16,11 @@
                 <div class="workout-card">
                     <div class="workout-indicator @plan.TrainingType?.Name.ToLower()"></div>
                     <div class="workout-details">
-                        <div class="workout-title">@(plan.Workout?.Name ?? plan.Name)</div>
+                        <div class="workout-title">@(string.IsNullOrWhiteSpace(plan.Workout?.Name) ? plan.Name : plan.Workout.Name)</div>
                         <div class="workout-metrics">
-                            @if (plan.Workout != null)
+                            @if (plan.Workout is not null)
                             {
-                                @($"{(plan.Workout.DistanceMeters / 1000.0):0.0} km \u2022 {plan.Workout.DurationMinutes} min")
+                                @($"{(plan.Workout.DistanceMeters / 1000.0):0.0} km") <span aria-hidden="true">&bull;</span> @($"{plan.Workout.DurationMinutes} min") <span aria-hidden="true">&bull;</span> @($"{plan.Workout.Segments.Count} segments")
                             }
                         </div>
                     </div>
@@ -28,25 +30,22 @@
         }
         else
         {
-            <div class="workout-metrics" style="padding: 16px 0;">No workouts scheduled (or filtered out).</div>
+            <div class="workout-metrics empty-state">No workouts scheduled (or filtered out).</div>
         }
     </div>
 
     <div class="add-workout-container @(_isFormExpanded ? "expanded" : "")">
-        <button class="btn-add" @onclick="ToggleForm">
-            @(_isFormExpanded ? "- Cancel" : "+ Add Workout")
-        </button>
+        <button class="btn-add" @onclick="ToggleForm">@(_isFormExpanded ? "- Cancel" : "+ Add Workout")</button>
 
         <div class="expandable-form">
-            <EditForm Model="NewTrainingPlan" OnSubmit="SaveWorkout">
+            <EditForm Model="_newTrainingPlan" OnSubmit="SaveWorkout">
                 <div class="form-group">
-                    <label>Workout Name</label>
-                    <InputText @bind-Value="NewTrainingPlan.Name" class="form-control" placeholder="e.g., Evening Run" />
+                    <label>Training Plan</label>
+                    <InputText @bind-Value="_newTrainingPlan.Name" class="form-control" placeholder="e.g., Evening Run" />
                 </div>
-
                 <div class="form-group">
                     <label>Activity Type</label>
-                    <InputSelect @bind-Value="NewTrainingPlan.TrainingTypeId" class="form-control" required>
+                    <InputSelect @bind-Value="_newTrainingPlan.TrainingTypeId" class="form-control">
                         <option value="0">Select a type...</option>
                         @foreach (var type in ActivityTypes)
                         {
@@ -54,12 +53,100 @@
                         }
                     </InputSelect>
                 </div>
-
                 <div class="form-group">
-                    <label>Description</label>
-                    <InputTextArea @bind-Value="NewTrainingPlan.Description" class="form-control" placeholder="Optional notes..." rows="3" />
+                    <label>Plan Notes</label>
+                    <InputTextArea @bind-Value="_newTrainingPlan.Description" class="form-control" placeholder="Optional plan notes..." rows="2" />
                 </div>
 
+                <section class="workout-editor">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Workout</h2>
+                            <p>Select steps to repeat them together.</p>
+                        </div>
+                        <div class="workout-actions">
+                            <button type="button" class="btn-secondary" @onclick="AddSegment">+ Add step</button>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Workout Name</label>
+                            <InputText @bind-Value="_newTrainingPlan.Workout.Name" class="form-control" placeholder="e.g., 5K Intervals" />
+                        </div>
+                        <div class="form-group">
+                            <label>Duration (minutes)</label>
+                            <InputNumber @bind-Value="_newTrainingPlan.Workout.DurationMinutes" class="form-control" min="0" />
+                        </div>
+                        <div class="form-group">
+                            <label>Distance (meters)</label>
+                            <InputNumber @bind-Value="_newTrainingPlan.Workout.DistanceMeters" class="form-control" min="0" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Workout Notes</label>
+                        <InputTextArea @bind-Value="_newTrainingPlan.Workout.Notes" class="form-control" placeholder="Optional workout notes..." rows="2" />
+                    </div>
+
+                    @foreach (var segment in _newTrainingPlan.Workout.Segments.OrderBy(s => s.Order))
+                    {
+                        <article class="segment-card">
+                            <div class="segment-header">
+                                <h3>Step @(segment.Order + 1) @if (segment.RepeatCount > 1) { <span class="repeat-badge">↻ @segment.RepeatCount</span> }</h3>
+                                <div class="step-actions">
+                                    <button type="button" class="btn-secondary repeat-action" @onclick="() => BeginRepeat(segment)">↻ Add repeat</button>
+                                    <button type="button" class="btn-remove" @onclick="() => RemoveSegment(segment)">Remove</button>
+                                </div>
+                            </div>
+                            <div class="form-group segment-fields">
+                                <label>Step Notes</label>
+                                <InputText @bind-Value="segment.Notes" class="form-control" placeholder="Warm up, hard effort..." />
+                            </div>
+                            @foreach (var interval in segment.Intervals.OrderBy(i => i.Order))
+                            {
+                                <div class="interval-row @(SelectedIntervals.Contains(interval) ? "interval-selected" : "")">
+                                    <input type="checkbox" class="interval-check" checked="@SelectedIntervals.Contains(interval)" disabled="@(_isRepeatEditorOpen && _repeatSegment != segment)" @onchange="args => ToggleIntervalSelection(interval, args)" aria-label="Select interval @(interval.Order + 1) for repeat" />
+                                    <span class="interval-number">@(interval.Order + 1)</span>
+                                    <select class="form-control interval-type" value="@GetIntervalMode(interval)" @onchange="args => ChangeIntervalMode(interval, args)">
+                                        <option value="open">Open</option>
+                                        <option value="distance">Distance</option>
+                                        <option value="time">Time</option>
+                                    </select>
+                                    @if (GetIntervalMode(interval) == "distance")
+                                    {
+                                        <InputNumber @bind-Value="interval.DistanceMeters" class="form-control" min="1" placeholder="Meters" />
+                                    }
+                                    else if (GetIntervalMode(interval) == "time")
+                                    {
+                                        <InputNumber @bind-Value="interval.DurationSeconds" class="form-control" min="1" placeholder="Seconds" />
+                                    }
+                                    <InputNumber @bind-Value="interval.TargetPaceSecondsPerKm" class="form-control pace-input" min="0" placeholder="Pace sec/km" />
+                                    <InputText @bind-Value="interval.Notes" class="form-control interval-notes" placeholder="Interval notes" />
+                                    <button type="button" class="btn-remove" @onclick="() => RemoveInterval(segment, interval)" aria-label="Remove interval">×</button>
+                                </div>
+                            }
+                            <button type="button" class="btn-link" @onclick="() => AddInterval(segment)">+ Add interval</button>
+                            @if (_isRepeatEditorOpen && _repeatSegment == segment)
+                            {
+                                <div class="repeat-editor">
+                                    <div>
+                                        <strong>Repeat this step</strong>
+                                        <span>@SelectedIntervals.Count selected</span>
+                                    </div>
+                                    <label>
+                                        Repeats
+                                        <InputNumber @bind-Value="_repeatCount" class="form-control repeat-count" min="2" />
+                                    </label>
+                                    <button type="button" class="btn-secondary" disabled="@(!SelectedIntervals.Any())" @onclick="ApplyRepeat">Apply repeat</button>
+                                    <button type="button" class="btn-link" @onclick="CancelRepeat">Cancel</button>
+                                </div>
+                            }
+                        </article>
+                    }
+                </section>
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                {
+                    <p class="form-error">@_errorMessage</p>
+                }
                 <button type="submit" class="btn-submit">Save Plan</button>
             </EditForm>
         </div>
@@ -69,39 +156,58 @@
 @code {
     [Parameter] public DateTime SelectedDate { get; set; }
     [Parameter] public IReadOnlyList<TrainingPlanDTO> SelectedPlans { get; set; } = Array.Empty<TrainingPlanDTO>();
-    [Parameter] public TrainingPlanDTO NewTrainingPlan { get; set; } = new();
     [Parameter] public IReadOnlyDictionary<int, TrainingTypeDTO> ActivityTypes { get; set; } = new Dictionary<int, TrainingTypeDTO>();
-    [Parameter] public Task GenerateCalendar { get; set; }
-    [Parameter] public List<TrainingPlanDTO> TrainingPlans { get; set; }
+    [Parameter] public List<TrainingPlanDTO> TrainingPlans { get; set; } = new();
+    [Parameter] public EventCallback OnWorkoutSaved { get; set; }
 
     private TrainingPlanDTO _newTrainingPlan = new() { Date = DateTime.Today };
     private bool _isFormExpanded;
-
+    private bool _isRepeatEditorOpen;
+    private int _repeatCount = 2;
+    private SegmentDTO? _repeatSegment;
+    private string? _errorMessage;
     private string workoutText => SelectedPlans.Count == 1 ? "workout" : "workouts";
+    private HashSet<IntervalDTO> SelectedIntervals { get; } = new();
 
-    private async void SaveWorkout()
+    private async Task SaveWorkout()
     {
+        _errorMessage = null;
+        SelectedIntervals.Clear();
+        _isRepeatEditorOpen = false;
+        _repeatSegment = null;
+        if (_newTrainingPlan.TrainingTypeId == 0)
+        {
+            _errorMessage = "Select an activity type before saving.";
+            return;
+        }
+
+        _newTrainingPlan.Date = SelectedDate;
+        _newTrainingPlan.TrainingType = ActivityTypes[_newTrainingPlan.TrainingTypeId];
+        if (string.IsNullOrWhiteSpace(_newTrainingPlan.Name))
+        {
+            _newTrainingPlan.Name = _newTrainingPlan.TrainingType.Name;
+        }
+        if (string.IsNullOrWhiteSpace(_newTrainingPlan.Workout.Name))
+        {
+            _newTrainingPlan.Workout.Name = _newTrainingPlan.Name;
+        }
+
         try
         {
-            if (_newTrainingPlan.TrainingTypeId == 0)
-            {
-                return;
-            }
-
-            _newTrainingPlan.TrainingType = ActivityTypes[_newTrainingPlan.TrainingTypeId];
-
-            if (string.IsNullOrEmpty(_newTrainingPlan.Name))
-            {
-                _newTrainingPlan.Name = _newTrainingPlan.TrainingType.Name;
-            }
-
-            TrainingPlans.Add(_newTrainingPlan);
+            TrainingPlanDTO savedPlan = await AgendaService.CreateTrainingPlanAsync(_newTrainingPlan);
+            savedPlan.TrainingType ??= _newTrainingPlan.TrainingType;
+            TrainingPlans.Add(savedPlan);
             _isFormExpanded = false;
-            _newTrainingPlan = new TrainingPlanDTO { Date = SelectedDate };
+            ResetForm();
+            await OnWorkoutSaved.InvokeAsync();
         }
-        finally
+        catch (HttpRequestException)
         {
-            GenerateCalendar.Start();
+            _errorMessage = "The workout could not be saved. Check the API connection and try again.";
+        }
+        catch (InvalidOperationException exception)
+        {
+            _errorMessage = exception.Message;
         }
     }
 
@@ -110,7 +216,162 @@
         _isFormExpanded = !_isFormExpanded;
         if (_isFormExpanded)
         {
-            _newTrainingPlan = new TrainingPlanDTO { Date = SelectedDate };
+            ResetForm();
+        }
+    }
+
+    private void ResetForm()
+    {
+        _errorMessage = null;
+        _newTrainingPlan = new TrainingPlanDTO
+        {
+            Date = SelectedDate,
+            Workout = new WorkoutDTO
+            {
+                Segments = new List<SegmentDTO> { CreateSegment(0) }
+            }
+        };
+        SelectedIntervals.Clear();
+        _isRepeatEditorOpen = false;
+        _repeatSegment = null;
+    }
+
+    private static SegmentDTO CreateSegment(int order) =>
+        new() { Order = order, RepeatCount = 1, Intervals = new List<IntervalDTO> { CreateInterval(0) } };
+
+    private static IntervalDTO CreateInterval(int order) => new() { Order = order };
+
+    private void AddSegment() =>
+        _newTrainingPlan.Workout.Segments.Add(CreateSegment(_newTrainingPlan.Workout.Segments.Count));
+
+    private void RemoveSegment(SegmentDTO segment)
+    {
+        if (_newTrainingPlan.Workout.Segments.Count == 1)
+        {
+            return;
+        }
+        _newTrainingPlan.Workout.Segments.Remove(segment);
+        foreach (var interval in segment.Intervals)
+        {
+            SelectedIntervals.Remove(interval);
+        }
+        if (_repeatSegment == segment)
+        {
+            _repeatSegment = null;
+            _isRepeatEditorOpen = false;
+        }
+        ReorderSegments();
+    }
+
+    private static void AddInterval(SegmentDTO segment) =>
+        segment.Intervals.Add(CreateInterval(segment.Intervals.Count));
+
+    private void RemoveInterval(SegmentDTO segment, IntervalDTO interval)
+    {
+        segment.Intervals.Remove(interval);
+        SelectedIntervals.Remove(interval);
+        for (var index = 0; index < segment.Intervals.Count; index++)
+        {
+            segment.Intervals.ElementAt(index).Order = index;
+        }
+    }
+
+    private void ToggleIntervalSelection(IntervalDTO interval, ChangeEventArgs args)
+    {
+        if (args.Value is true || string.Equals(args.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase))
+        {
+            SelectedIntervals.Add(interval);
+        }
+        else
+        {
+            SelectedIntervals.Remove(interval);
+        }
+    }
+
+    private void BeginRepeat(SegmentDTO segment)
+    {
+        SelectedIntervals.Clear();
+        _repeatCount = segment.RepeatCount > 1 ? segment.RepeatCount : 2;
+        _repeatSegment = segment;
+        _isRepeatEditorOpen = true;
+    }
+
+    private void CancelRepeat()
+    {
+        _isRepeatEditorOpen = false;
+        SelectedIntervals.Clear();
+        _repeatSegment = null;
+    }
+
+    private void ApplyRepeat()
+    {
+        if (_repeatSegment is null || SelectedIntervals.Count == 0 || _repeatCount < 2)
+        {
+            return;
+        }
+
+        var segment = _repeatSegment;
+        var selected = segment.Intervals
+            .Where(SelectedIntervals.Contains)
+            .OrderBy(interval => interval.Order)
+            .ToList();
+
+        if (selected.Count == segment.Intervals.Count)
+        {
+            segment.RepeatCount = _repeatCount;
+            SelectedIntervals.Clear();
+            _isRepeatEditorOpen = false;
+            _repeatSegment = null;
+            return;
+        }
+
+        var repeatedSegment = new SegmentDTO
+        {
+            Order = segment.Order + 1,
+            RepeatCount = _repeatCount,
+            Intervals = selected
+        };
+        for (var index = 0; index < selected.Count; index++)
+        {
+            selected[index].Order = index;
+        }
+        foreach (var interval in selected)
+        {
+            segment.Intervals.Remove(interval);
+        }
+        var segments = _newTrainingPlan.Workout.Segments.ToList();
+        segments.Insert(segment.Order + 1, repeatedSegment);
+        _newTrainingPlan.Workout.Segments = segments;
+
+        ReorderSegments();
+        SelectedIntervals.Clear();
+        _isRepeatEditorOpen = false;
+        _repeatSegment = null;
+    }
+
+    private void ReorderSegments()
+    {
+        for (var index = 0; index < _newTrainingPlan.Workout.Segments.Count; index++)
+        {
+            _newTrainingPlan.Workout.Segments.ElementAt(index).Order = index;
+        }
+    }
+
+    private static string GetIntervalMode(IntervalDTO interval) =>
+        interval.DistanceMeters.HasValue ? "distance" :
+        interval.DurationSeconds.HasValue ? "time" : "open";
+
+    private static void ChangeIntervalMode(IntervalDTO interval, ChangeEventArgs args)
+    {
+        interval.DistanceMeters = null;
+        interval.DurationSeconds = null;
+        if (args.Value?.ToString() == "distance")
+        {
+            interval.DistanceMeters = 1;
+        }
+        else if (args.Value?.ToString() == "time")
+        {
+            interval.DurationSeconds = 1;
         }
     }
 }
