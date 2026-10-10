@@ -29,7 +29,12 @@
                 <div class="activity-dots">
                     @foreach (var plan in plansForDay)
                     {
-                        <div class="dot @plan.TrainingType?.Name.ToLower()"></div>
+                        <div class="calendar-workout @plan.TrainingType?.Name.ToLower()"
+                             @onclick:stopPropagation="true"
+                             @onclick="() => OnWorkoutSelected.InvokeAsync(plan)">
+                            <strong>@(string.IsNullOrWhiteSpace(plan.Workout?.Name) ? plan.Name : plan.Workout.Name)</strong>
+                            <span>@plan.TrainingType?.Name</span>
+                        </div>
                     }
                 </div>
             </div>
@@ -58,6 +63,7 @@
     [Parameter] public EventCallback<DateTime> OnSelectedDateChanged { get; set; }
     [Parameter] public EventCallback<DateTime> OnCurrentMonthChanged { get; set; }
     [Parameter] public EventCallback<TrainingTypeDTO> OnToggleActivityType { get; set; }
+    [Parameter] public EventCallback<TrainingPlanDTO> OnWorkoutSelected { get; set; }
 
     private IReadOnlyList<TrainingPlanDTO> GetPlansForDate(DateTime date)
     {
