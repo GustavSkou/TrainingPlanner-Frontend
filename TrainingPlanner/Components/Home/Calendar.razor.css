@@ -18,9 +18,10 @@
 .month-nav { display: flex; gap: 8px; }
 .nav-btn { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dark); font-weight: 600; }
 
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: 30px repeat(6, minmax(0, 1fr)); flex: 1; min-height: 0; gap: 0; text-align: left; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(108px, .8fr); grid-template-rows: 30px repeat(6, minmax(0, 1fr)); flex: 1; min-height: 0; gap: 0; text-align: left; }
 
 .day-name { font-size: 10px; font-weight: 500; color: #68758a; padding: 10px; border-bottom: 1px solid #e5eaf1; }
+.summary-heading { border-left: 1px solid #e5eaf1; }
 
 .date-cell { display: flex; flex-direction: column; align-items: flex-start; font-size: 11px; min-height: 0; color: #273247; cursor: pointer; padding: clamp(4px, .6vw, 10px); border-right: 1px solid #e5eaf1; border-bottom: 1px solid #e5eaf1; overflow: hidden; }
 .date-cell.muted { color: #b7bfcb; background: #fbfcfe; }
@@ -32,6 +33,14 @@
 .calendar-workout { display: flex; flex-direction: column; gap: 2px; padding: clamp(3px, .4vw, 6px) clamp(4px, .5vw, 7px); border-left: 3px solid #2864e8; border-radius: 4px; background: #eef4ff; color: #273247; overflow: hidden; }
 .calendar-workout strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
 .calendar-workout span { color: #68758a; font-size: 9px; }
+.weekly-summary { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 9px 8px; border-left: 1px solid #e5eaf1; border-bottom: 1px solid #e5eaf1; background: #fbfcfe; color: #68758a; font-size: 8px; }
+.weekly-summary strong { color: #68758a; font-size: 8px; font-weight: 600; }
+.weekly-summary b { color: #273247; font-size: 9px; font-weight: 600; }
+.weekly-summary dl { display: flex; flex-direction: column; gap: 3px; margin: 2px 0 0; }
+.weekly-summary dl div { display: flex; justify-content: space-between; gap: 5px; }
+.weekly-summary dt { color: #8290a6; }
+.weekly-summary dd { margin: 0; color: #273247; font-weight: 600; }
+.summary-badge { align-self: flex-start; max-width: 100%; padding: 4px 6px; border: 1px solid #2864e8; border-radius: 4px; color: #2864e8; font-size: 8px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-workout.cycling { border-left-color: #4d8791; background: #edf7f7; }
 .calendar-workout.strength, .calendar-workout.workout { border-left-color: #8063a5; background: #f5f0fa; }
 .dot { width: 4px; height: 4px; border-radius: 50%; }
@@ -48,3 +57,8 @@
 .guide-item:hover { opacity: 0.8; }
 .guide-item.inactive { opacity: 0.3; }
 .guide-item .dot { width: 6px; height: 6px; }
+
+@media (max-width: 900px) {
+    .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    .summary-heading, .weekly-summary { display: none; }
+}

@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/calendar"
 @rendermode InteractiveServer
 @inject NavigationManager _navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -32,9 +32,9 @@
     <Authorized>
     <div class="app-window">
         <header class="stride-header">
-            <a class="brand" href="/" aria-label="Stride home"><span class="brand-mark">⌁</span><strong>stride</strong></a>
+            <a class="brand" href="/calendar" aria-label="Stride home"><span class="brand-mark">⌁</span><strong>stride</strong></a>
             <nav aria-label="Main navigation">
-                <a class="active" href="/">Training calendar</a>
+                <a class="active" href="/calendar">Training calendar</a>
                 <a href="/plans">Training plans</a>
                 <a href="/workouts">Workout library</a>
             </nav>
@@ -43,7 +43,6 @@
         <section class="page-heading">
             <div>
                 <h1>Training calendar</h1>
-                <p>Your training, one day at a time. Plan your sessions and make room for recovery.</p>
             </div>
             <button class="header-add-workout" @onclick="OpenWorkoutForm">+ Add workout</button>
         </section>

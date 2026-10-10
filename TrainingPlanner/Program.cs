@@ -5,8 +5,6 @@ using TrainingPlanner.Services.Implementation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -60,7 +58,7 @@ app.MapRazorComponents<App>()
 
 app.MapGet("/login/github", () => Results.Challenge(
 
-    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
+    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/calendar" },
     new List<string> { "GitHub" }));
 
 app.MapGet("/logout", () => Results.SignOut(

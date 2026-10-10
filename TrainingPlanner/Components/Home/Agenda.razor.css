@@ -38,6 +38,14 @@
 .section-heading h2 { font-size: 14px; }
 .section-heading p { margin-bottom: 0; }
 .details-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(90px, .6fr) minmax(90px, .6fr); gap: 12px; }
+.details-grid { grid-template-columns: minmax(0, 1.7fr) minmax(145px, 1fr) minmax(110px, .7fr); }
+.choice-group { display: flex; gap: 10px; margin-bottom: 6px; }
+.choice-group label { display: flex; align-items: center; gap: 4px; color: #63718a; font-size: 10px; text-transform: none; }
+.choice-group input { accent-color: #2864e8; }
+.unit-input { display: flex; align-items: center; gap: 7px; }
+.unit-input .form-control { flex: 1; }
+.unit-input > span { min-width: 22px; color: #63718a; font-size: 10px; }
+.pace-field label small { color: #8a97aa; font-size: 9px; font-weight: 400; }
 .details-grid .form-group { margin: 0; }
 .notes-link { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: #2864e8; font-size: 11px; }
 .notes-link input { flex: 0 1 140px; border: 0; outline: 0; color: #2864e8; font: inherit; font-size: 11px; }

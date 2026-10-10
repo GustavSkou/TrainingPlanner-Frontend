@@ -1,5 +1,6 @@
 @using TrainingPlanner.Models
 @using TrainingPlanner.Services.Contracts
+@using System.Globalization
 @inject IAgendaService AgendaService
 
 <main class="agenda @(!ShowForm ? "agenda-hidden" : "")">
@@ -25,7 +26,7 @@
                     </div>
                     <div class="form-group">
                         <label>Activity type</label>
-                        <InputSelect @bind-Value="_newTrainingPlan.TrainingTypeId" class="form-control">
+                        <InputSelect @bind-Value="_newTrainingPlan.TrainingTypeId" @bind-Value:after="OnTrainingTypeChanged" class="form-control">
                             <option value="0">Select a type...</option>
                             @foreach (var type in ActivityTypes)
                             {
@@ -40,7 +41,7 @@
                 </section>
                 <section class="editor-card glance-card">
                     <h2>At a glance</h2>
-                    <div class="glance-values"><div><strong>@_newTrainingPlan.Workout.DurationMinutes</strong><span>min<br />Planned duration</span></div><div><strong>@($"{_newTrainingPlan.Workout.DistanceMeters / 1000.0:0.0}")</strong><span>km<br />Planned distance</span></div></div>
+                    <div class="glance-values"><div><strong>@DisplayedDuration</strong><span>min:sec<br />Planned duration</span></div><div><strong>@DisplayedDistance</strong><span>@DistanceUnit<br />Planned distance</span></div></div>
                     <div class="glance-meta">☷ @_newTrainingPlan.Workout.Segments.Count steps</div>
                 </section>
                 <p class="editor-note">ⓘ Changes apply to this workout only, not the rest of your training plan.</p>
@@ -51,27 +52,76 @@
                     <div class="section-heading"><div><h2>Workout details</h2></div></div>
                     <div class="details-grid">
                         <div class="form-group"><label>Workout name</label><InputText @bind-Value="_newTrainingPlan.Workout.Name" class="form-control" placeholder="e.g., 5K intervals" /></div>
-                        <div class="form-group"><label>Duration</label><InputNumber @bind-Value="_newTrainingPlan.Workout.DurationMinutes" class="form-control" min="0" /></div>
-                        <div class="form-group"><label>Distance</label><InputNumber @bind-Value="_newTrainingPlan.Workout.DistanceMeters" class="form-control" min="0" /></div>
+                        <div class="form-group measurement-choice">
+                            <label>Primary measure</label>
+                            
+                            @if (_measurementMode == MeasurementMode.Duration)
+                            {
+                                <div class="unit-input"><InputNumber @bind-Value="_newTrainingPlan.Workout.DurationMinutes" class="form-control" min="0" /><span>min</span></div>
+                            }
+                            else
+                            {
+                                <div class="unit-input">
+                                    @if (UsesKilometers)
+                                    {
+                                        <InputNumber @bind-Value="DistanceKilometers" class="form-control" min="0" step="0.1" />
+                                    }
+                                    else
+                                    {
+                                        <InputNumber @bind-Value="_newTrainingPlan.Workout.DistanceMeters" class="form-control" min="0" />
+                                    }
+                                    <span>@DistanceUnit</span>
+                                </div>
+                            }
+                            <div class="choice-group">
+                                <label><input type="radio" name="measure" checked="@(_measurementMode == MeasurementMode.Duration)" @onchange="() => SetMeasurementMode(MeasurementMode.Duration)" /> Duration</label>
+                                <label><input type="radio" name="measure" checked="@(_measurementMode == MeasurementMode.Distance)" disabled="@IsWorkoutType" @onchange="() => SetMeasurementMode(MeasurementMode.Distance)" /> Distance</label>
+                            </div>
+                        </div>
+                        @if (SupportsPace)
+                        {
+                            <div class="form-group pace-field">
+                                <label>Pace <small>@PaceUnit</small></label>
+                                <InputText @bind-Value="PaceText" class="form-control" placeholder="@(UsesClockPace ? "5:30" : "30")" />
+                            </div>
+                        }
                     </div>
                     <label class="notes-link">+ <InputText @bind-Value="_newTrainingPlan.Workout.Notes" placeholder="Add workout notes" /> <small>Optional</small></label>
                 </section>
 
                 <section class="editor-card steps-card">
                     <div class="section-heading"><div><h2>Workout steps</h2><p>Build your session in order. Select intervals before adding a repeat.</p></div><span class="step-count">@_newTrainingPlan.Workout.Segments.Count steps</span></div>
+                    
                     @foreach (var segment in _newTrainingPlan.Workout.Segments.OrderBy(s => s.Order))
                     {
                         <article class="segment-card @(SelectedIntervals.Any() && _repeatSegment == segment ? "segment-selected" : "")">
-                            <div class="segment-header"><h3><span class="drag-handle">⁙</span><span class="step-number">@(segment.Order + 1)</span>@(string.IsNullOrWhiteSpace(segment.Notes) ? $"Step {segment.Order + 1}" : segment.Notes)</h3><div class="step-actions"><button type="button" class="btn-secondary repeat-action" @onclick="() => BeginRepeat(segment)">↻ Repeat</button><button type="button" class="btn-remove" @onclick="() => RemoveSegment(segment)">♲</button><button type="button" class="btn-collapse">⌃</button></div></div>
+                            <div class="segment-header">
+                                <h3>
+                                    <span class="drag-handle">⁙</span>
+                                    <span class="step-number">@(segment.Order + 1)</span>
+                                    @(string.IsNullOrWhiteSpace(segment.Notes) ? $"Step {segment.Order + 1}" : segment.Notes)
+                                </h3>
+                                    <div class="step-actions">
+                                        <button type="button" class="btn-secondary repeat-action" @onclick="() => BeginRepeat(segment)">↻ Repeat</button>
+                                        <button type="button" class="btn-remove" @onclick="() => RemoveSegment(segment)">-</button>
+                                        <button type="button" class="btn-collapse">⌃</button>
+                                    </div>
+                            </div>
                             <div class="segment-fields form-row"><div class="form-group"><label>Step notes</label><InputText @bind-Value="segment.Notes" class="form-control" placeholder="Warm up, hard effort..." /></div></div>
+                            
                             @foreach (var interval in segment.Intervals.OrderBy(i => i.Order))
                             {
                                 <div class="interval-row @(SelectedIntervals.Contains(interval) ? "interval-selected" : "")">
                                     <input type="checkbox" class="interval-check" checked="@SelectedIntervals.Contains(interval)" @onchange="args => ToggleIntervalSelection(interval, args)" aria-label="Select interval @(interval.Order + 1) for repeat" />
                                     <span class="interval-number">@(interval.Order + 1)</span>
                                     <select class="form-control interval-type" value="@GetIntervalMode(interval)" @onchange="args => ChangeIntervalMode(interval, args)"><option value="open">Run</option><option value="distance">Distance</option><option value="time">Time</option></select>
-                                    @if (GetIntervalMode(interval) == "distance") { <InputNumber @bind-Value="interval.DistanceMeters" class="form-control" min="1" placeholder="Meters" /> }
-                                    else if (GetIntervalMode(interval) == "time") { <InputNumber @bind-Value="interval.DurationSeconds" class="form-control" min="1" placeholder="Seconds" /> }
+                                    
+                                    @if (GetIntervalMode(interval) == "distance") { 
+                                        <InputNumber @bind-Value="interval.DistanceMeters" class="form-control" min="1" placeholder="Meters" /> 
+                                    }
+                                    else if (GetIntervalMode(interval) == "time") { 
+                                        <InputNumber @bind-Value="interval.DurationSeconds" class="form-control" min="1" placeholder="Seconds" /> 
+                                    }
                                     <InputNumber @bind-Value="interval.TargetPaceSecondsPerKm" class="form-control pace-input" min="0" placeholder="Target pace" />
                                     <InputText @bind-Value="interval.Notes" class="form-control interval-notes" placeholder="Interval notes · optional" />
                                     <button type="button" class="btn-remove" @onclick="() => RemoveInterval(segment, interval)" aria-label="Remove interval">×</button>
@@ -80,6 +130,7 @@
                             <div class="segment-footer"><button type="button" class="btn-secondary" @onclick="() => AddInterval(segment)">+ Add interval</button>@if (_isRepeatEditorOpen && _repeatSegment == segment) { <span class="repeat-editor-inline"><InputNumber @bind-Value="_repeatCount" class="form-control repeat-count" min="2" /> times <button type="button" class="btn-link" @onclick="ApplyRepeat">Apply</button></span> }</div>
                         </article>
                     }
+
                     <div class="bottom-actions"><button type="button" class="btn-secondary" @onclick="AddSegment">+ Add step</button><button type="button" class="btn-secondary repeat-action" @onclick="BeginRepeatForLastSegment">↻ Add repeat</button><span>Add a single effort or a repeating set of intervals.</span></div>
                 </section>
                 @if (!string.IsNullOrWhiteSpace(_errorMessage)) { <p class="form-error">@_errorMessage</p> }
@@ -107,6 +158,130 @@
     private string? _errorMessage;
     private string workoutText => SelectedPlans.Count == 1 ? "workout" : "workouts";
     private HashSet<IntervalDTO> SelectedIntervals { get; } = new();
+    private MeasurementMode _measurementMode = MeasurementMode.Duration;
+
+    private bool IsWorkoutType =>
+        IsActivity("workout") || IsActivity("strength");
+
+    private bool SupportsPace =>
+        !IsWorkoutType && !string.IsNullOrWhiteSpace(PaceUnit);
+
+    private bool UsesKilometers =>
+        IsActivity("running") || IsActivity("run") ||
+        IsActivity("cycling") || IsActivity("cycle") || IsActivity("bike");
+
+    private bool UsesClockPace =>
+        IsActivity("running") || IsActivity("run") ||
+        IsActivity("swimming") || IsActivity("swim");
+
+    private string DistanceUnit => UsesKilometers ? "km" : "m";
+
+    private decimal DistanceKilometers
+    {
+        get => _newTrainingPlan.Workout.DistanceMeters / 1000m;
+        set => _newTrainingPlan.Workout.DistanceMeters = (int)Math.Round(value * 1000m);
+    }
+
+    private string PaceText
+    {
+        get => UsesClockPace
+            ? FormatClockPace(_newTrainingPlan.Workout.Pace)
+            : _newTrainingPlan.Workout.Pace?.ToString("0.##", CultureInfo.InvariantCulture) ?? string.Empty;
+        set
+        {
+            _newTrainingPlan.Workout.Pace = ParsePace(value);
+        }
+    }
+
+    private string DisplayedDuration => FormatDuration(CalculatedDurationMinutes);
+
+    private string DisplayedDistance => UsesKilometers
+        ? $"{CalculatedDistanceMeters / 1000m:0.##}"
+        : $"{CalculatedDistanceMeters:0}";
+
+    private decimal CalculatedDurationMinutes
+    {
+        get
+        {
+            if (SupportsPace && _newTrainingPlan.Workout.Pace is > 0 && _newTrainingPlan.Workout.DistanceMeters > 0)
+            {
+                var distance = UsesKilometers
+                    ? _newTrainingPlan.Workout.DistanceMeters / 1000m
+                    : _newTrainingPlan.Workout.DistanceMeters / 100m;
+                return UsesClockPace
+                    ? distance * _newTrainingPlan.Workout.Pace.Value
+                    : distance / _newTrainingPlan.Workout.Pace.Value * 60m;
+            }
+
+            return _newTrainingPlan.Workout.DurationMinutes;
+        }
+    }
+
+    private decimal CalculatedDistanceMeters
+    {
+        get
+        {
+            if (SupportsPace && _newTrainingPlan.Workout.Pace is > 0 && _newTrainingPlan.Workout.DurationMinutes > 0)
+            {
+                var distance = UsesClockPace
+                    ? _newTrainingPlan.Workout.DurationMinutes / _newTrainingPlan.Workout.Pace.Value
+                    : _newTrainingPlan.Workout.DurationMinutes / 60m * _newTrainingPlan.Workout.Pace.Value;
+                return UsesKilometers ? distance * 1000m : distance * 100m;
+            }
+
+            return _newTrainingPlan.Workout.DistanceMeters;
+        }
+    }
+
+    private string PaceUnit => ActivityTypes.GetValueOrDefault(_newTrainingPlan.TrainingTypeId)?.Name.ToLowerInvariant() switch
+    {
+        "running" or "run" => "min/km",
+        "cycling" or "cycle" or "bike" => "km/h",
+        "swimming" or "swim" => "min/100m",
+        _ => string.Empty
+    };
+
+    private bool IsActivity(string name) =>
+        string.Equals(ActivityTypes.GetValueOrDefault(_newTrainingPlan.TrainingTypeId)?.Name, name, StringComparison.OrdinalIgnoreCase);
+
+    private static string FormatClockPace(decimal? pace)
+    {
+        if (pace is null or <= 0)
+        {
+            return string.Empty;
+        }
+
+        var totalSeconds = (int)Math.Round(pace.Value * 60m);
+        return $"{totalSeconds / 60}:{totalSeconds % 60:00}";
+    }
+
+    private static string FormatDuration(decimal durationMinutes)
+    {
+        var totalSeconds = Math.Max(0, (int)Math.Round(durationMinutes * 60m));
+        return $"{totalSeconds / 60}:{totalSeconds % 60:00}";
+    }
+
+    private decimal? ParsePace(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        if (UsesClockPace && value.Contains(':', StringComparison.Ordinal))
+        {
+            var parts = value.Split(':', 2);
+            if (int.TryParse(parts[0], out var minutes) &&
+                int.TryParse(parts[1], out var seconds))
+            {
+                return (minutes * 60m + seconds) / 60m;
+            }
+        }
+
+        return decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var pace)
+            ? pace
+            : _newTrainingPlan.Workout.Pace;
+    }
 
     protected override void OnParametersSet()
     {
@@ -121,6 +296,12 @@
             {
                 _newTrainingPlan = EditingPlan;
                 _newTrainingPlan.Workout ??= new WorkoutDTO();
+                _measurementMode = IsWorkoutType
+                    ? MeasurementMode.Duration
+                    : _newTrainingPlan.Workout.DistanceMeters > 0
+                    ? MeasurementMode.Distance
+                    : MeasurementMode.Duration;
+                _newTrainingPlan.Workout.PaceUnit = PaceUnit;
                 _errorMessage = null;
             }
         }
@@ -138,6 +319,29 @@
             return;
         }
 
+        if (IsWorkoutType)
+        {
+            _measurementMode = MeasurementMode.Duration;
+            _newTrainingPlan.Workout.DistanceMeters = 0;
+            _newTrainingPlan.Workout.Pace = null;
+            _newTrainingPlan.Workout.PaceUnit = null;
+        }
+        else if (_measurementMode == MeasurementMode.Duration)
+        {
+            _newTrainingPlan.Workout.DistanceMeters = 0;
+        }
+        else
+        {
+            _newTrainingPlan.Workout.DurationMinutes = 0;
+        }
+
+        if (SupportsPace && _newTrainingPlan.Workout.Pace is > 0)
+        {
+            _newTrainingPlan.Workout.DurationMinutes = (int)Math.Round(CalculatedDurationMinutes);
+            _newTrainingPlan.Workout.DistanceMeters = (int)Math.Round(CalculatedDistanceMeters);
+        }
+
+        _newTrainingPlan.Workout.PaceUnit = SupportsPace ? PaceUnit : null;
         _newTrainingPlan.Date = _newTrainingPlan.Date.Date;
         _newTrainingPlan.TrainingType = ActivityTypes[_newTrainingPlan.TrainingTypeId];
         if (string.IsNullOrWhiteSpace(_newTrainingPlan.Name))
@@ -218,6 +422,28 @@
         SelectedIntervals.Clear();
         _isRepeatEditorOpen = false;
         _repeatSegment = null;
+        _measurementMode = MeasurementMode.Duration;
+    }
+
+    private void OnTrainingTypeChanged()
+    {
+        if (IsWorkoutType)
+        {
+            SetMeasurementMode(MeasurementMode.Duration);
+        }
+    }
+
+    private void SetMeasurementMode(MeasurementMode mode)
+    {
+        _measurementMode = IsWorkoutType ? MeasurementMode.Duration : mode;
+        if (_measurementMode == MeasurementMode.Duration)
+        {
+            _newTrainingPlan.Workout.DistanceMeters = 0;
+        }
+        else
+        {
+            _newTrainingPlan.Workout.DurationMinutes = 0;
+        }
     }
 
     private static SegmentDTO CreateSegment(int order) =>
@@ -372,5 +598,11 @@
         {
             interval.DurationSeconds = 1;
         }
+    }
+
+    private enum MeasurementMode
+    {
+        Duration,
+        Distance
     }
 }

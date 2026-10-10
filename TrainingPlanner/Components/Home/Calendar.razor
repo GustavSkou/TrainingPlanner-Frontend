@@ -18,25 +18,54 @@
         <div class="day-name">Fri</div>
         <div class="day-name">Sat</div>
         <div class="day-name">Sun</div>
+        <div class="day-name summary-heading">Weekly summary</div>
 
-        @foreach (var day in CalendarDays)
+        @foreach (var week in CalendarDays.Chunk(7))
         {
-            var plansForDay = GetPlansForDate(day.Date);
-            <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == SelectedDate ? "active" : "")"
-                 @onclick="() => OnSelectedDateChanged.InvokeAsync(day.Date)">
-                <div class="date-number">@day.Date.Day</div>
+            foreach (var day in week)
+            {
+                var plansForDay = GetPlansForDate(day.Date);
+                <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == SelectedDate ? "active" : "")"
+                     @onclick="() => OnSelectedDateChanged.InvokeAsync(day.Date)">
+                    <div class="date-number">@day.Date.Day</div>
 
-                <div class="activity-dots">
-                    @foreach (var plan in plansForDay)
-                    {
-                        <div class="calendar-workout @plan.TrainingType?.Name.ToLower()"
-                             @onclick:stopPropagation="true"
-                             @onclick="() => OnWorkoutSelected.InvokeAsync(plan)">
-                            <strong>@(string.IsNullOrWhiteSpace(plan.Workout?.Name) ? plan.Name : plan.Workout.Name)</strong>
-                            <span>@plan.TrainingType?.Name</span>
-                        </div>
-                    }
+                    <div class="activity-dots">
+                        @foreach (var plan in plansForDay)
+                        {
+                            <div class="calendar-workout @plan.TrainingType?.Name.ToLower()"
+                                 @onclick:stopPropagation="true"
+                                 @onclick="() => OnWorkoutSelected.InvokeAsync(plan)">
+                                <strong>@(string.IsNullOrWhiteSpace(plan.Workout?.Name) ? plan.Name : plan.Workout.Name)</strong>
+                                <span>@plan.TrainingType?.Name</span>
+                                <span>@plan.Workout?.Pace</span>
+                            </div>
+                        }
+                    </div>
                 </div>
+            }
+
+            var weekStart = week[0].Date;
+            var weekEnd = week[^1].Date;
+            var weekPlans = TrainingPlans
+                .Where(plan => plan.Date.Date >= weekStart.Date && plan.Date.Date <= weekEnd.Date &&
+                               (plan.TrainingType == null || plan.TrainingType.IsSelected))
+                .ToList();
+            var distanceKm = weekPlans.Sum(plan => plan.Workout?.DistanceMeters ?? 0) / 1000m;
+            var durationMinutes = weekPlans.Sum(plan => plan.Workout?.DurationMinutes ?? 0);
+            var activityCounts = weekPlans
+                .GroupBy(plan => plan.TrainingType?.Name ?? "Other")
+                .OrderByDescending(group => group.Count())
+                .Take(3)
+                .Select(group => $"{group.Count()} {group.Key.ToLowerInvariant()}")
+                .ToList();
+            <div class="weekly-summary">
+                
+                <dl>
+                    <div><dt>Workouts</dt><dd>@weekPlans.Count</dd></div>
+                    <div><dt>Distance</dt><dd>@($"{distanceKm:0.0} km")</dd></div>
+                    <div><dt>Duration</dt><dd>@FormatDuration(durationMinutes)</dd></div>
+                </dl>
+                
             </div>
         }
     </div>
@@ -88,5 +117,12 @@
         return Task.WhenAll(
             OnSelectedDateChanged.InvokeAsync(DateTime.Today),
             OnCurrentMonthChanged.InvokeAsync(DateTime.Today));
+    }
+
+    private static string FormatDuration(int minutes)
+    {
+        var hours = minutes / 60;
+        var remainingMinutes = minutes % 60;
+        return hours > 0 ? $"{hours}h {remainingMinutes:00}m" : $"{remainingMinutes}m";
     }
 }
