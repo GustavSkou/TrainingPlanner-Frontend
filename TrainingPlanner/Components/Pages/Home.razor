@@ -118,31 +118,6 @@
         await GenerateCalendar();
     }
 
-    private string AppWindowStyle => $"--sidebar-width: {_sidebarWidth:0}px;";
-
-    private void StartResizing(PointerEventArgs args)
-    {
-        IsResizing = true;
-        _resizeStartX = args.ClientX;
-        _resizeStartWidth = _sidebarWidth;
-    }
-
-    private void OnPointerMove(PointerEventArgs args)
-    {
-        if (!IsResizing)
-        {
-            return;
-        }
-
-        var nextWidth = _resizeStartWidth + (args.ClientX - _resizeStartX);
-        _sidebarWidth = Math.Clamp(nextWidth, SidebarMinWidth, SidebarMaxWidth);
-    }
-
-    private void StopResizing(PointerEventArgs _)
-    {
-        IsResizing = false;
-    }
-
     private Task SetCurrentMonth(DateTime month)
     {
         _currentMonth = month;

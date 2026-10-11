@@ -55,6 +55,7 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGet("/", () => Results.Redirect("/calendar"));
 
 app.MapGet("/login/github", () => Results.Challenge(
 
@@ -128,9 +129,6 @@ static void AddAuthentication(WebApplicationBuilder builder)
             }
 
             IUserService userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-
-            //Console.WriteLine("HEERR");
-
 
             await userService.CreateUser(new TrainingPlanner.Models.UserDTO
             {
