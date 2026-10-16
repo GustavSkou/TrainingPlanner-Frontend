@@ -1,0 +1,27 @@
+@using TrainingPlanner.Models
+
+<div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == SelectedDate ? "active" : "")"
+     @onclick="() => OnSelectedDateChanged.InvokeAsync(day.Date)">
+    <div class="date-number">@day.Date.Day</div>
+
+    <div class="activity-dots">
+        @foreach (var plan in plansForDay)
+        {
+            <div class="calendar-workout @plan.TrainingType?.Name.ToLower()"
+                 @onclick:stopPropagation="true"
+                 @onclick="() => OnWorkoutSelected.InvokeAsync(plan)">
+                <strong>@(string.IsNullOrWhiteSpace(plan.Workout?.Name) ? plan.Name : plan.Workout.Name)</strong>
+                <span>@plan.TrainingType?.Name</span>
+                <span>@plan.Workout?.Pace</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public CalendarDay day {get; set;}
+    [Parameter] public DateTime SelectedDate {get; set;}
+    [Parameter] public IReadOnlyList<TrainingPlanDTO>? plansForDay {get; set;}
+    [Parameter] public EventCallback<TrainingPlanDTO> OnWorkoutSelected {get; set;}
+    [Parameter] public EventCallback<DateTime> OnSelectedDateChanged { get; set; }
+}

@@ -24,24 +24,14 @@
         {
             foreach (var day in week)
             {
-                var plansForDay = GetPlansForDate(day.Date);
-                <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == SelectedDate ? "active" : "")"
-                     @onclick="() => OnSelectedDateChanged.InvokeAsync(day.Date)">
-                    <div class="date-number">@day.Date.Day</div>
-
-                    <div class="activity-dots">
-                        @foreach (var plan in plansForDay)
-                        {
-                            <div class="calendar-workout @plan.TrainingType?.Name.ToLower()"
-                                 @onclick:stopPropagation="true"
-                                 @onclick="() => OnWorkoutSelected.InvokeAsync(plan)">
-                                <strong>@(string.IsNullOrWhiteSpace(plan.Workout?.Name) ? plan.Name : plan.Workout.Name)</strong>
-                                <span>@plan.TrainingType?.Name</span>
-                                <span>@plan.Workout?.Pace</span>
-                            </div>
-                        }
-                    </div>
-                </div>
+                IReadOnlyList<TrainingPlanDTO>? plansForDay = GetPlansForDate(day.Date);
+                <DateCell 
+                    day = "day"
+                    SelectedDate = "SelectedDate"
+                    plansForDay ="plansForDay"
+                    OnWorkoutSelected = "OnWorkoutSelected"
+                    OnSelectedDateChanged = "OnSelectedDateChanged"
+                />
             }
 
             var weekStart = week[0].Date;
