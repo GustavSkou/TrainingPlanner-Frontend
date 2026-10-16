@@ -28,21 +28,15 @@
 .date-number { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 5px; }
 .date-cell.active .date-number { background: #2864e8; color: white; font-weight: 600; }
 
-/* Dots */
 .activity-dots { display: flex; flex-direction: column; gap: 4px; width: 100%; }
 .calendar-workout { display: flex; flex-direction: column; gap: 2px; padding: clamp(3px, .4vw, 6px) clamp(4px, .5vw, 7px); border-left: 3px solid #2864e8; border-radius: 4px; background: #eef4ff; color: #273247; overflow: hidden; }
 .calendar-workout strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
 .calendar-workout span { color: #68758a; font-size: 9px; }
-.weekly-summary { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 9px 8px; border-left: 1px solid #e5eaf1; border-bottom: 1px solid #e5eaf1; background: #fbfcfe; color: #68758a; font-size: 8px; }
-.weekly-summary strong { color: #68758a; font-size: 8px; font-weight: 600; }
-.weekly-summary b { color: #273247; font-size: 9px; font-weight: 600; }
-.weekly-summary dl { display: flex; flex-direction: column; gap: 3px; margin: 2px 0 0; }
-.weekly-summary dl div { display: flex; justify-content: space-between; gap: 5px; }
-.weekly-summary dt { color: #8290a6; }
-.weekly-summary dd { margin: 0; color: #273247; font-weight: 600; }
+
 .summary-badge { align-self: flex-start; max-width: 100%; padding: 4px 6px; border: 1px solid #2864e8; border-radius: 4px; color: #2864e8; font-size: 8px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-workout.cycling { border-left-color: #4d8791; background: #edf7f7; }
 .calendar-workout.strength, .calendar-workout.workout { border-left-color: #8063a5; background: #f5f0fa; }
+
 .dot { width: 4px; height: 4px; border-radius: 50%; }
 .dot.running { background-color: var(--color-green); }
 .dot.cycling { background-color: var(--color-orange); }
