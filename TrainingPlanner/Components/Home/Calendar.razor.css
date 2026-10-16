@@ -25,14 +25,10 @@
 
 
 
-.activity-dots { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-.calendar-workout { display: flex; flex-direction: column; gap: 2px; padding: clamp(3px, .4vw, 6px) clamp(4px, .5vw, 7px); border-left: 3px solid #2864e8; border-radius: 4px; background: #eef4ff; color: #273247; overflow: hidden; }
-.calendar-workout strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
-.calendar-workout span { color: #68758a; font-size: 9px; }
+
 
 .summary-badge { align-self: flex-start; max-width: 100%; padding: 4px 6px; border: 1px solid #2864e8; border-radius: 4px; color: #2864e8; font-size: 8px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.calendar-workout.cycling { border-left-color: #4d8791; background: #edf7f7; }
-.calendar-workout.strength, .calendar-workout.workout { border-left-color: #8063a5; background: #f5f0fa; }
+
 
 .dot { width: 4px; height: 4px; border-radius: 50%; }
 .dot.running { background-color: var(--color-green); }
