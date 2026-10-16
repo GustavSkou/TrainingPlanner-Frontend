@@ -1,0 +1,38 @@
+meta {
+  name: Create plan
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/plans/create
+  body: json
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "userId": {{userId}},
+    "trainingTypeId": 1,
+    "name": "Base run",
+    "description": "Easy aerobic training",
+    "date": "2026-01-15T06:30:00Z",
+    "workout": {
+      "userId": {{userId}},
+      "trainingPlanId": 0,
+      "name": "Easy run",
+      "description": "Conversational pace",
+      "durationMinutes": 40,
+      "distanceMeters": 6000,
+      "pace": 6.67,
+      "paceUnit": "min/km",
+      "notes": null,
+      "segments": []
+    }
+  }
+}

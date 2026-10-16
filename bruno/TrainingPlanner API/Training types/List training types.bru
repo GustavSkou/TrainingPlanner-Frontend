@@ -1,0 +1,15 @@
+meta {
+  name: List training types
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/types
+  body: none
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+}

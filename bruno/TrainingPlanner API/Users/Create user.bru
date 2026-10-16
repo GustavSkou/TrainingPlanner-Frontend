@@ -1,0 +1,27 @@
+meta {
+  name: Create user
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/users
+  body: json
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "firstName": "Ada",
+    "lastName": "Lovelace",
+    "email": "ada@example.com",
+    "loginProvider": "github",
+    "nameIdentifier": "github-user-id",
+    "createdAt": "2026-01-01T00:00:00Z"
+  }
+}

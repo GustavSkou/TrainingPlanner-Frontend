@@ -1,0 +1,31 @@
+meta {
+  name: Create workout
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/workouts/create
+  body: json
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "userId": {{userId}},
+    "trainingPlanId": {{planId}},
+    "name": "Interval workout",
+    "description": "Speed session",
+    "durationMinutes": 50,
+    "distanceMeters": 8000,
+    "pace": 5.5,
+    "paceUnit": "min/km",
+    "notes": "Warm up and cool down included",
+    "segments": []
+  }
+}

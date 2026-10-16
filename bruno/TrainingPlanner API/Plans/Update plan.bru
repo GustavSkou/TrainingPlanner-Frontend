@@ -1,0 +1,40 @@
+meta {
+  name: Update plan
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/plans/{{planId}}
+  body: json
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "id": {{planId}},
+    "userId": {{userId}},
+    "trainingTypeId": 1,
+    "name": "Updated base run",
+    "description": "Updated training description",
+    "date": "2026-01-15T06:30:00Z",
+    "workout": {
+      "id": {{workoutId}},
+      "userId": {{userId}},
+      "trainingPlanId": {{planId}},
+      "name": "Updated easy run",
+      "description": "Conversational pace",
+      "durationMinutes": 45,
+      "distanceMeters": 7000,
+      "pace": 6.43,
+      "paceUnit": "min/km",
+      "notes": null,
+      "segments": []
+    }
+  }
+}

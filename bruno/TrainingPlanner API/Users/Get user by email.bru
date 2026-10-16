@@ -1,0 +1,15 @@
+meta {
+  name: Get user by email
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/users?email={{email}}
+  body: none
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+}
