@@ -1,5 +1,12 @@
 @using TrainingPlanner.Models
 
+<style>
+    .date-cell { display: flex; flex-direction: column; align-items: flex-start; font-size: 11px; min-height: 0; color: #273247; cursor: pointer; padding: clamp(4px, .6vw, 10px); border-right: 1px solid #e5eaf1; border-bottom: 1px solid #e5eaf1; overflow: hidden; }
+    .date-cell.muted { color: #b7bfcb; background: #fbfcfe; }
+    .date-number { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 5px; }
+    .date-cell.active .date-number { background: #2864e8; color: white; font-weight: 600; }
+</style>
+
 <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == SelectedDate ? "active" : "")"
      @onclick="() => OnSelectedDateChanged.InvokeAsync(day.Date)">
     <div class="date-number">@day.Date.Day</div>
