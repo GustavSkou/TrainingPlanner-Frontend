@@ -19,4 +19,18 @@ public sealed class TrainingPlannerApiClient(HttpClient httpClient) : ITrainingP
 
         return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
     }
+
+    public async Task<TResponse?> PutAsync<TRequest, TResponse>(string requestPath, TRequest content, CancellationToken cancellationToken = default)
+    {
+        using HttpResponseMessage response = await httpClient.PutAsJsonAsync(requestPath, content, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: cancellationToken);
+    }
+
+    public async Task DeleteAsync(string requestPath, CancellationToken cancellationToken = default)
+    {
+        using HttpResponseMessage response = await httpClient.DeleteAsync(requestPath, cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
 }

@@ -18,21 +18,34 @@
         <div class="day-name">Fri</div>
         <div class="day-name">Sat</div>
         <div class="day-name">Sun</div>
+        <div class="day-name summary-heading">Weekly summary</div>
 
-        @foreach (var day in CalendarDays)
+        @foreach (var week in CalendarDays.Chunk(7))
         {
-            var plansForDay = GetPlansForDate(day.Date);
-            <div class="date-cell @(day.IsCurrentMonth ? "" : "muted") @(day.Date == SelectedDate ? "active" : "")"
-                 @onclick="() => OnSelectedDateChanged.InvokeAsync(day.Date)">
-                <div class="date-number">@day.Date.Day</div>
+            foreach (var day in week)
+            {
+                IReadOnlyList<TrainingPlanDTO>? plansForDay = GetPlansForDate(day.Date);
+                <DateCell 
+                    day = "day"
+                    SelectedDate = "SelectedDate"
+                    plansForDay ="plansForDay"
+                    OnWorkoutSelected = "OnWorkoutSelected"
+                    OnSelectedDateChanged = "OnSelectedDateChanged"
+                />
+            }
 
-                <div class="activity-dots">
-                    @foreach (var plan in plansForDay)
-                    {
-                        <div class="dot @plan.TrainingType?.Name.ToLower()"></div>
-                    }
-                </div>
-            </div>
+            var weekStart = week[0].Date;
+            var weekEnd = week[^1].Date;
+            var weekPlans = TrainingPlans
+                .Where(plan => plan.Date.Date >= weekStart.Date && plan.Date.Date <= weekEnd.Date &&
+                               (plan.TrainingType == null || plan.TrainingType.IsSelected))
+                .ToList();
+            
+            <WeekSummary 
+                weekStart = "weekStart"
+                weekEnd = "weekEnd"
+                weekPlans = "weekPlans"
+            />
         }
     </div>
 
@@ -58,6 +71,7 @@
     [Parameter] public EventCallback<DateTime> OnSelectedDateChanged { get; set; }
     [Parameter] public EventCallback<DateTime> OnCurrentMonthChanged { get; set; }
     [Parameter] public EventCallback<TrainingTypeDTO> OnToggleActivityType { get; set; }
+    [Parameter] public EventCallback<TrainingPlanDTO> OnWorkoutSelected { get; set; }
 
     private IReadOnlyList<TrainingPlanDTO> GetPlansForDate(DateTime date)
     {

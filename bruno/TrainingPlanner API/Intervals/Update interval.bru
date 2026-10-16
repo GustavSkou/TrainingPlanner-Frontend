@@ -1,0 +1,30 @@
+meta {
+  name: Update interval
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/intervals/{{intervalId}}
+  body: json
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "id": {{intervalId}},
+    "segmentId": 1,
+    "order": 1,
+    "distanceMeters": 1200,
+    "durationSeconds": 360,
+    "targetPaceSecondsPerKm": 300,
+    "targetPaceSecondsPerKmUpperBound": 310,
+    "targetPaceSecondsPerKmLowerBound": 290,
+    "notes": "Updated controlled effort"
+  }
+}

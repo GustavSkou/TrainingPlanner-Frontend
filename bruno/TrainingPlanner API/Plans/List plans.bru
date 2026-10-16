@@ -1,0 +1,15 @@
+meta {
+  name: List plans
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/plans
+  body: none
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+}

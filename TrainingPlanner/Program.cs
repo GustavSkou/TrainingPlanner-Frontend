@@ -5,8 +5,6 @@ using TrainingPlanner.Services.Implementation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -57,10 +55,11 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGet("/", () => Results.Redirect("/calendar"));
 
 app.MapGet("/login/github", () => Results.Challenge(
 
-    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/" },
+    new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/calendar" },
     new List<string> { "GitHub" }));
 
 app.MapGet("/logout", () => Results.SignOut(
@@ -130,9 +129,6 @@ static void AddAuthentication(WebApplicationBuilder builder)
             }
 
             IUserService userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-
-            //Console.WriteLine("HEERR");
-
 
             await userService.CreateUser(new TrainingPlanner.Models.UserDTO
             {

@@ -11,6 +11,8 @@ namespace TrainingPlanner.Models
         public string? Description { get; set; }
         public int DurationMinutes { get; set; }
         public int DistanceMeters { get; set; }
+        public decimal? Pace { get; set; }
+        public string? PaceUnit { get; set; }
         public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

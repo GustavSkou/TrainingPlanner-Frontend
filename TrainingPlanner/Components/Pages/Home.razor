@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/calendar"
 @rendermode InteractiveServer
 @inject NavigationManager _navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -30,7 +30,22 @@
 
 <AuthorizeView>
     <Authorized>
-    <div class="app-window @(IsResizing ? "resizing" : "")" style="@AppWindowStyle" @onpointermove="OnPointerMove" @onpointerup="StopResizing" @onpointercancel="StopResizing">
+    <div class="app-window">
+        <header class="stride-header">
+            <a class="brand" href="/calendar" aria-label="Stride home"><span class="brand-mark">⌁</span><strong>stride</strong></a>
+            <nav aria-label="Main navigation">
+                <a class="active" href="/calendar">Training calendar</a>
+                <a href="/plans">Training plans</a>
+                <a href="/workouts">Workout library</a>
+            </nav>
+            <span class="avatar">AL</span>
+        </header>
+        <section class="page-heading">
+            <div>
+                <h1>Training calendar</h1>
+            </div>
+            <button class="header-add-workout" @onclick="OpenWorkoutForm">+ Add workout</button>
+        </section>
         <div class="app-content">
             <Calendar CurrentMonth="_currentMonth"
                     SelectedDate="_selectedDate"
@@ -39,18 +54,16 @@
                     TrainingPlans="_trainingPlans"
                     OnSelectedDateChanged="SelectDate"
                     OnCurrentMonthChanged="SetCurrentMonth"
-                    OnToggleActivityType="ToggleActivityType" />
-
-            <div class="resize-handle"
-                @onpointerdown="StartResizing"
-                @onpointerup="StopResizing"
-                @onpointercancel="StopResizing"
-                title="Drag to resize"></div>
+                    OnToggleActivityType="ToggleActivityType"
+                    OnWorkoutSelected="OpenExistingWorkout" />
 
             <Agenda             SelectedDate="_selectedDate"
             SelectedPlans="GetSelectedPlans()"
             ActivityTypes="_activityTypes" 
             TrainingPlans="_trainingPlans"
+            ShowForm="_showWorkoutForm"
+            EditingPlan="_editingPlan"
+            OnFormClosed="CloseWorkoutForm"
             OnWorkoutSaved="RefreshAgenda" />
         </div>
     </div>
@@ -75,6 +88,8 @@
     private double _resizeStartWidth;
     private Dictionary<int, TrainingTypeDTO> _activityTypes = new();
     private List<TrainingPlanDTO> _trainingPlans = new();
+    private bool _showWorkoutForm;
+    private TrainingPlanDTO? _editingPlan;
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,36 +104,18 @@
             return;
         }
 
-        IReadOnlyList<TrainingTypeDTO>? types = await CalendarService.GetTypesAsync();
+        IReadOnlyList<TrainingTypeDTO> types = await CalendarService.GetTypesAsync();
         _activityTypes = types.ToDictionary(t => t.Id, t => t);
-
-        SeedDummyData();
-        GenerateCalendar();
-    }
-
-    private string AppWindowStyle => $"--sidebar-width: {_sidebarWidth:0}px;";
-
-    private void StartResizing(PointerEventArgs args)
-    {
-        IsResizing = true;
-        _resizeStartX = args.ClientX;
-        _resizeStartWidth = _sidebarWidth;
-    }
-
-    private void OnPointerMove(PointerEventArgs args)
-    {
-        if (!IsResizing)
+        IReadOnlyList<TrainingPlanDTO> plans = await CalendarService.GetTrainingPlansAsync();
+        _trainingPlans = plans.ToList();
+        foreach (TrainingPlanDTO plan in _trainingPlans)
         {
-            return;
+            if (plan.TrainingType is not null && _activityTypes.TryGetValue(plan.TrainingType.Id, out TrainingTypeDTO? type))
+            {
+                plan.TrainingType = type;
+            }
         }
-
-        var nextWidth = _resizeStartWidth + (args.ClientX - _resizeStartX);
-        _sidebarWidth = Math.Clamp(nextWidth, SidebarMinWidth, SidebarMaxWidth);
-    }
-
-    private void StopResizing(PointerEventArgs _)
-    {
-        IsResizing = false;
+        await GenerateCalendar();
     }
 
     private Task SetCurrentMonth(DateTime month)
@@ -138,6 +135,25 @@
     {
         GenerateCalendar();
         return InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenWorkoutForm()
+    {
+        _editingPlan = null;
+        _showWorkoutForm = true;
+    }
+
+    private void CloseWorkoutForm()
+    {
+        _showWorkoutForm = false;
+        _editingPlan = null;
+    }
+
+    private void OpenExistingWorkout(TrainingPlanDTO plan)
+    {
+        _selectedDate = plan.Date.Date;
+        _editingPlan = plan;
+        _showWorkoutForm = true;
     }
 
     private Task GenerateCalendar()
@@ -173,30 +189,4 @@
             .ToList();
     }
 
-    private void SeedDummyData()
-    {
-        _trainingPlans = new List<TrainingPlanDTO>
-        {
-            new TrainingPlanDTO
-            {
-                Date = new DateTime(2026, 8, 12),
-                Name = "Morning Routine",
-                TrainingType = _activityTypes[1],
-                Workout = new WorkoutDTO { Name = "Morning Run", DistanceMeters = 5200, DurationMinutes = 28 }
-            },
-            new TrainingPlanDTO
-            {
-                Date = new DateTime(2026, 8, 12),
-                Name = "Afternoon Swim",
-                TrainingType = _activityTypes[3],
-                Workout = new WorkoutDTO { Name = "Pool Swim", DistanceMeters = 1500, DurationMinutes = 35 }
-            },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 4), Name = "Cycling", TrainingType = _activityTypes[2] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Run", TrainingType = _activityTypes[1] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 6), Name = "Weights", TrainingType = _activityTypes[4] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 8), Name = "Weights", TrainingType = _activityTypes[4] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 11), Name = "Cycling", TrainingType = _activityTypes[2] },
-            new TrainingPlanDTO { Date = new DateTime(2026, 8, 14), Name = "Weights", TrainingType = _activityTypes[4] },
-        };
-    }
 }

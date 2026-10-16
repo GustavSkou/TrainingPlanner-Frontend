@@ -1,0 +1,29 @@
+meta {
+  name: Create interval
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/intervals/create
+  body: json
+  auth: none
+}
+
+headers {
+  API-KEY: {{apiKey}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "segmentId": 1,
+    "order": 1,
+    "distanceMeters": 1000,
+    "durationSeconds": 300,
+    "targetPaceSecondsPerKm": 300,
+    "targetPaceSecondsPerKmUpperBound": 310,
+    "targetPaceSecondsPerKmLowerBound": 290,
+    "notes": "Controlled effort"
+  }
+}
