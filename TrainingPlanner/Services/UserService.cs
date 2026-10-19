@@ -43,6 +43,23 @@ public sealed class UserService(ITrainingPlannerApiClient apiClient) : IUserServ
         return user;
     }
 
+    public async Task<UserDTO> GetOrCreateUser(
+        UserDTO user,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsUserValid(user))
+            throw new ArgumentException("The user details are invalid.", nameof(user));
+
+        try
+        {
+            return await GetUserByEMail(user.Email, cancellationToken);
+        }
+        catch (HttpRequestException exception) when (exception.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return await CreateUser(user, cancellationToken);
+        }
+    }
+
     private bool IsUserValid(UserDTO user)
     {
         if (user is null ||

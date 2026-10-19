@@ -23,12 +23,7 @@
 .day-name { font-size: 10px; font-weight: 500; color: #68758a; padding: 10px; border-bottom: 1px solid #e5eaf1; }
 .summary-heading { border-left: 1px solid #e5eaf1; }
 
-
-
-
-
 .summary-badge { align-self: flex-start; max-width: 100%; padding: 4px 6px; border: 1px solid #2864e8; border-radius: 4px; color: #2864e8; font-size: 8px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 
 .dot { width: 4px; height: 4px; border-radius: 50%; }
 .dot.running { background-color: var(--color-green); }

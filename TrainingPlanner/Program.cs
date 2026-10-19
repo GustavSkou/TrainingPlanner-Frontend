@@ -58,7 +58,6 @@ app.MapRazorComponents<App>()
 app.MapGet("/", () => Results.Redirect("/calendar"));
 
 app.MapGet("/login/github", () => Results.Challenge(
-
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/calendar" },
     new List<string> { "GitHub" }));
 
@@ -106,20 +105,6 @@ static void AddAuthentication(WebApplicationBuilder builder)
         options.CallbackPath = "/signin-github";
         options.Events.OnCreatingTicket = async context =>
         {
-            if (!context.Properties.Items.TryGetValue("registration:flow", out string? registrationFlow) ||
-                !string.Equals(registrationFlow, "true", StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            context.Properties.Items.TryGetValue("registration:firstName", out string? firstName);
-            context.Properties.Items.TryGetValue("registration:lastName", out string? lastName);
-
-            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
-            {
-                return;
-            }
-
             string? email = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
             string? nameIdentifier = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -129,16 +114,65 @@ static void AddAuthentication(WebApplicationBuilder builder)
             }
 
             IUserService userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
+            bool isRegistrationFlow =
+                context.Properties.Items.TryGetValue("registration:flow", out string? registrationFlow) &&
+                string.Equals(registrationFlow, "true", StringComparison.Ordinal);
+            string firstName = string.Empty;
+            string lastName = string.Empty;
 
-            await userService.CreateUser(new TrainingPlanner.Models.UserDTO
+            if (isRegistrationFlow)
             {
-                FirstName = firstName,
-                LastName = lastName,
+                context.Properties.Items.TryGetValue("registration:firstName", out string? registrationFirstName);
+                context.Properties.Items.TryGetValue("registration:lastName", out string? registrationLastName);
+                firstName = registrationFirstName ?? string.Empty;
+                lastName = registrationLastName ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            {
+                if (string.IsNullOrWhiteSpace(firstName))
+                {
+                    firstName = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ?? string.Empty;
+                }
+
+                if (string.IsNullOrWhiteSpace(lastName))
+                {
+                    lastName = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value ?? string.Empty;
+                }
+
+                string fullName = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? string.Empty;
+                string[] nameParts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                if (string.IsNullOrWhiteSpace(firstName) && nameParts.Length > 0)
+                {
+                    firstName = nameParts[0];
+                }
+
+                if (string.IsNullOrWhiteSpace(lastName) && nameParts.Length > 1)
+                {
+                    lastName = string.Join(' ', nameParts.Skip(1));
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(firstName))
+            {
+                firstName = "GitHub";
+            }
+
+            if (string.IsNullOrWhiteSpace(lastName))
+            {
+                lastName = nameIdentifier;
+            }
+
+            await userService.GetOrCreateUser(new TrainingPlanner.Models.UserDTO
+            {
+                FirstName = firstName.Trim(),
+                LastName = lastName.Trim(),
                 Email = email,
                 LoginProvider = "github",
                 NameIdentifier = nameIdentifier,
                 CreatedAt = DateTime.UtcNow
-            });
+            }, context.HttpContext.RequestAborted);
         };
     });
 }
