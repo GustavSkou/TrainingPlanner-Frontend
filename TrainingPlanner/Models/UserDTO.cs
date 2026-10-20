@@ -13,7 +13,7 @@ namespace TrainingPlanner.Models
 
         public override string ToString()
         {
-            return $"{nameof(GetType)}\n{FirstName}\n{LastName}\n{Email}\n{CreatedAt}\n{UpdatedAt}";
+            return $"{FirstName}\n{LastName}\n{Email}\n{LoginProvider}\n{NameIdentifier}";
         }
     }
 }
