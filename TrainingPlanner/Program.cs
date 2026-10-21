@@ -118,23 +118,19 @@ static void AddAuthentication(WebApplicationBuilder builder)
             bool isRegistrationFlow =
                 context.Properties.Items.TryGetValue("registration:flow", out string? registrationFlow) &&
                 string.Equals(registrationFlow, "true", StringComparison.Ordinal);
-            string firstName = string.Empty;
-            string lastName = string.Empty;
+            string UserName = string.Empty;
             string fullName = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            if (string.IsNullOrWhiteSpace(UserName))
             {
-                if (string.IsNullOrWhiteSpace(firstName))
-                    firstName = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ?? string.Empty;
-                
-                if (string.IsNullOrWhiteSpace(lastName))
-                    lastName = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.Surname)?.Value ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(UserName))
+                    UserName = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ?? string.Empty;
 
                 fullName = context.Identity?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? string.Empty;
             }
 
-            if (string.IsNullOrWhiteSpace(firstName))
-                firstName = fullName;
+            if (string.IsNullOrWhiteSpace(UserName))
+                UserName = fullName;
             
             /*Console.WriteLine($"{new TrainingPlanner.Models.UserDTO {
                 FirstName = firstName.Trim(),
@@ -146,7 +142,7 @@ static void AddAuthentication(WebApplicationBuilder builder)
 
             await userService.GetOrCreateUser(new TrainingPlanner.Models.UserDTO
             {
-                FirstName = firstName.Trim(),
+                UserName = UserName.Trim(),
                 Email = email,
                 LoginProvider = "github",
                 NameIdentifier = nameIdentifier,

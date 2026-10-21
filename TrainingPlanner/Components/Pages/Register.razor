@@ -27,11 +27,7 @@
                 <div class="name-fields">
                     <label>
                         First name
-                        <InputText @bind-Value="user.FirstName" autocomplete="given-name" />
-                    </label>
-                    <label>
-                        Last name
-                        <InputText @bind-Value="user.LastName" autocomplete="family-name" />
+                        <InputText @bind-Value="user.UserName" autocomplete="given-name" />
                     </label>
                 </div>
                 <button type="submit" class="github-button">
@@ -185,13 +181,12 @@
 
     private void HandleRegister()
     {
-        if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.LastName))
+        if (string.IsNullOrWhiteSpace(user.UserName))
         {
             return;
         }
 
-        string firstName = Uri.EscapeDataString(user.FirstName.Trim());
-        string lastName = Uri.EscapeDataString(user.LastName.Trim());
-        _navigation.NavigateTo($"/register/github?firstName={firstName}&lastName={lastName}");
+        string userName = Uri.EscapeDataString(user.UserName.Trim());
+        _navigation.NavigateTo($"/register/github?firstName={userName}");
     }
 }

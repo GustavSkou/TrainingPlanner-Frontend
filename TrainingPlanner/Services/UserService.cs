@@ -63,8 +63,7 @@ public sealed class UserService(ITrainingPlannerApiClient apiClient) : IUserServ
     private bool IsUserValid(UserDTO user)
     {
         if (user is null ||
-            string.IsNullOrWhiteSpace(user.FirstName) ||
-            string.IsNullOrWhiteSpace(user.LastName) ||
+            string.IsNullOrWhiteSpace(user.UserName) ||
             string.IsNullOrWhiteSpace(user.Email) ||
             string.IsNullOrWhiteSpace(user.LoginProvider) ||
             string.IsNullOrWhiteSpace(user.NameIdentifier))

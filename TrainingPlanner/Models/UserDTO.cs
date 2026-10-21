@@ -3,8 +3,7 @@ namespace TrainingPlanner.Models
     public class UserDTO
     {
         public int? Id { get; set; } = null;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string LoginProvider { get; set; } = string.Empty;   // fx github
         public string NameIdentifier { get; set; } = string.Empty;  // identifieren fra loginprovider        
@@ -13,7 +12,7 @@ namespace TrainingPlanner.Models
 
         public override string ToString()
         {
-            return $"{FirstName}\n{LastName}\n{Email}\n{LoginProvider}\n{NameIdentifier}";
+            return $"{UserName}\n{Email}\n{LoginProvider}\n{NameIdentifier}";
         }
     }
 }
