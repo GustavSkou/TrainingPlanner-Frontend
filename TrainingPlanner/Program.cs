@@ -136,22 +136,22 @@ static void AddAuthentication(WebApplicationBuilder builder)
             if (string.IsNullOrWhiteSpace(firstName))
                 firstName = fullName;
             
-            Console.WriteLine($"{new TrainingPlanner.Models.UserDTO {
+            /*Console.WriteLine($"{new TrainingPlanner.Models.UserDTO {
                 FirstName = firstName.Trim(),
                 Email = email,
                 LoginProvider = "github",
                 NameIdentifier = nameIdentifier,
                 CreatedAt = DateTime.UtcNow
-            }}");
+            }}");*/
 
-            /*await userService.GetOrCreateUser(new TrainingPlanner.Models.UserDTO
+            await userService.GetOrCreateUser(new TrainingPlanner.Models.UserDTO
             {
                 FirstName = firstName.Trim(),
                 Email = email,
                 LoginProvider = "github",
                 NameIdentifier = nameIdentifier,
                 CreatedAt = DateTime.UtcNow
-            }, context.HttpContext.RequestAborted);*/
+            }, context.HttpContext.RequestAborted);
         };
     });
 }
