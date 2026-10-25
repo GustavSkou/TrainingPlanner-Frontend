@@ -2,6 +2,7 @@ using TrainingPlanner.Services.Api;
 using TrainingPlanner.Services.Contracts;
 using TrainingPlanner.Models;
 using System.Net.Mail;
+using System.Text.Json.Serialization;
 
 namespace TrainingPlanner.Services.Implementation;
 
@@ -23,29 +24,22 @@ public sealed class UserService(ITrainingPlannerApiClient apiClient) : IUserServ
         return result;
     }
 
-    public async Task<UserDTO> GetUserByEMail(
-        string eMail,
-        CancellationToken cancellationToken = default)
+    public async Task<UserDTO> GetUserByEMail(string eMail, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(eMail))
-        {
             throw new ArgumentException("An email address is required.", nameof(eMail));
-        }
+        
 
         string requestUri = $"users?email={Uri.EscapeDataString(eMail.Trim())}";
         UserDTO? user = await _apiClient.GetAsync<UserDTO>(requestUri, cancellationToken);
 
         if (user is null)
-        {
             throw new InvalidOperationException("The API did not return a user.");
-        }
-
+        
         return user;
     }
 
-    public async Task<UserDTO> GetOrCreateUser(
-        UserDTO user,
-        CancellationToken cancellationToken = default)
+    public async Task<UserDTO> GetOrCreateUser(UserDTO user, CancellationToken cancellationToken = default)
     {
         if (!IsUserValid(user))
             throw new ArgumentException("The user details are invalid.", nameof(user));
@@ -80,5 +74,19 @@ public sealed class UserService(ITrainingPlannerApiClient apiClient) : IUserServ
         {
             return false;
         }
+    }
+
+    public async Task<UserDTO> GetUserById(int id, CancellationToken cancellationToken = default)
+    {
+        if (id <= 0)
+            throw new ArgumentOutOfRangeException(nameof(id), "The user ID must be positive.");
+
+        string requestUri = $"users?ids={id}";
+        UserDTO[]? users = await _apiClient.GetAsync<UserDTO[]>(requestUri, cancellationToken);
+
+        if (users is null || users.Length == 0)
+            throw new InvalidOperationException($"The API did not return a user with ID {id}.");
+        
+        return users[0];
     }
 }

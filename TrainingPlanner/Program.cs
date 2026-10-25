@@ -4,6 +4,8 @@ using TrainingPlanner.Services.Contracts;
 using TrainingPlanner.Services.Implementation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
+using TrainingPlanner.Models;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,7 +67,7 @@ app.MapGet("/logout", () => Results.SignOut(
     new Microsoft.AspNetCore.Authentication.AuthenticationProperties { RedirectUri = "/login" },
     new List<string> { CookieAuthenticationDefaults.AuthenticationScheme }));
 
-app.MapGet("/register/github", (string firstName, string lastName) =>
+/*app.MapGet("/register/github", (string firstName, string lastName) =>
 {
     if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
     {
@@ -81,7 +83,7 @@ app.MapGet("/register/github", (string firstName, string lastName) =>
     properties.Items["registration:lastName"] = lastName.Trim();
 
     return Results.Challenge(properties, new List<string> { "GitHub" });
-});
+});*/
 
 app.Run();
 //
@@ -96,7 +98,11 @@ static void AddAuthentication(WebApplicationBuilder builder)
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = "GitHub";
     })
-    .AddCookie()
+    .AddCookie(options =>
+    {
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    })
     .AddGitHub(options =>
     {
         options.ClientId = builder.Configuration["GitHub:ClientId"];
@@ -115,9 +121,7 @@ static void AddAuthentication(WebApplicationBuilder builder)
             }
 
             IUserService userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-            bool isRegistrationFlow =
-                context.Properties.Items.TryGetValue("registration:flow", out string? registrationFlow) &&
-                string.Equals(registrationFlow, "true", StringComparison.Ordinal);
+
             string UserName = string.Empty;
             string fullName = string.Empty;
 
@@ -132,15 +136,7 @@ static void AddAuthentication(WebApplicationBuilder builder)
             if (string.IsNullOrWhiteSpace(UserName))
                 UserName = fullName;
             
-            /*Console.WriteLine($"{new TrainingPlanner.Models.UserDTO {
-                FirstName = firstName.Trim(),
-                Email = email,
-                LoginProvider = "github",
-                NameIdentifier = nameIdentifier,
-                CreatedAt = DateTime.UtcNow
-            }}");*/
-
-            await userService.GetOrCreateUser(new TrainingPlanner.Models.UserDTO
+            UserDTO user = await userService.GetOrCreateUser(new UserDTO
             {
                 UserName = UserName.Trim(),
                 Email = email,
@@ -148,7 +144,22 @@ static void AddAuthentication(WebApplicationBuilder builder)
                 NameIdentifier = nameIdentifier,
                 CreatedAt = DateTime.UtcNow
             }, context.HttpContext.RequestAborted);
-        };
+
+            if (!user.Id.HasValue)
+            {
+                throw new InvalidOperationException(
+                    "The user API returned a user without an ID.");
+            }
+
+            context.Identity.AddClaim(
+                new Claim("app_user_id", user.Id.Value.ToString()));
+
+            context.Identity.AddClaim(
+                new Claim(ClaimTypes.Name, user.UserName));
+
+            context.Identity.AddClaim(
+                new Claim(ClaimTypes.Email, user.Email));
+                };
     });
 }
 

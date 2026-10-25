@@ -6,16 +6,11 @@ namespace TrainingPlanner.Services.Implementation;
 
 public sealed class AgendaService(ITrainingPlannerApiClient apiClient) : IAgendaService
 {
-    public async Task<TrainingPlanDTO> CreateTrainingPlanAsync(
-        TrainingPlanDTO trainingPlanDTO,
-        CancellationToken cancellationToken = default)
+    public async Task<TrainingPlanDTO> CreateTrainingPlanAsync(TrainingPlanDTO trainingPlanDTO, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(trainingPlanDTO);
 
-        TrainingPlanDTO? result = await apiClient.PostAsync<TrainingPlanDTO, TrainingPlanDTO>(
-            "plans/create",
-            trainingPlanDTO,
-            cancellationToken);
+        TrainingPlanDTO? result = await apiClient.PostAsync<TrainingPlanDTO, TrainingPlanDTO>("plans/create", trainingPlanDTO, cancellationToken);
 
         if (result is null)
         {

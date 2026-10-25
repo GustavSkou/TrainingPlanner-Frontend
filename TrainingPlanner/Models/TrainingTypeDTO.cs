@@ -1,12 +1,27 @@
-using System;
+using System.Text.Json.Serialization;
 
 namespace TrainingPlanner.Models
 {
-    public class TrainingTypeDTO(int Id, string Name, string Description="", bool IsSelected=true)
+    public class TrainingTypeDTO
     {
-        public int Id { get; set; } = Id;
-        public string Name { get; set; } = Name;
-        public string Description { get; set; } = Description;
-        public bool IsSelected { get; set; } = IsSelected;
+        public TrainingTypeDTO()
+        {
+        }
+
+        public TrainingTypeDTO(int id, string name, string description = "", bool isSelected = true)
+        {
+            Id = id;
+            Name = name;
+            Description = description;
+            IsSelected = isSelected;
+        }
+
+        public int Id { get; set; }
+        
+        public string Name { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public bool IsSelected { get; set; } = true;
     }
 }

@@ -15,27 +15,26 @@ public sealed class CalendarService(ITrainingPlannerApiClient apiClient) : ICale
         new TrainingTypeDTO(4, "Workout", "")
     ];
 
-    public async Task<IReadOnlyList<TrainingPlanDTO>> GetTrainingPlansAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrainingPlanDTO>> GetTrainingPlansAsync(int? userId, CancellationToken cancellationToken = default)
     {
+        
         try
         {
-            IReadOnlyList<TrainingPlanDTO>? plans =
-                await apiClient.GetAsync<List<TrainingPlanDTO>>("plans", cancellationToken);
-
-            return plans ?? Array.Empty<TrainingPlanDTO>();
+            string requestUri = $"plans/user?userId={userId}";
+            TrainingPlanDTO[]? plans =
+                await apiClient.GetAsync<TrainingPlanDTO[]>(requestUri, cancellationToken);
+            return plans is null ? Array.Empty<TrainingPlanDTO>() : plans;
         }
         catch (HttpRequestException)
         {
-            return CreateMockPlans();
-        }
-        catch (NotSupportedException)
-        {
-            return CreateMockPlans();
+            return [];
         }
         catch (JsonException)
         {
-            return CreateMockPlans();
+            
+            string requestUri = $"plans/user?userId={userId}";
+            TrainingPlanDTO[]? plans = [await apiClient.GetAsync<TrainingPlanDTO>(requestUri, cancellationToken)];
+            return plans is null ? Array.Empty<TrainingPlanDTO>() : plans;
         }
     }
 
@@ -60,36 +59,4 @@ public sealed class CalendarService(ITrainingPlannerApiClient apiClient) : ICale
             return FallbackCategories;
         }
     }
-
-    private static IReadOnlyList<TrainingPlanDTO> CreateMockPlans()
-    {
-        DateTime today = DateTime.Today;
-        return
-        [
-            CreateMockPlan(today, 1, "Easy morning run", 35, 5500),
-            CreateMockPlan(today.AddDays(2), 2, "Steady ride", 55, 18000),
-            CreateMockPlan(today.AddDays(4), 4, "Strength session", 45, 0),
-            CreateMockPlan(today.AddDays(6), 1, "Long run", 70, 11000)
-        ];
-    }
-
-    private static TrainingPlanDTO CreateMockPlan(
-        DateTime date,
-        int trainingTypeId,
-        string name,
-        int durationMinutes,
-        int distanceMeters) =>
-        new()
-        {
-            TrainingTypeId = trainingTypeId,
-            Name = name,
-            Date = date.Date,
-            TrainingType = FallbackCategories.First(type => type.Id == trainingTypeId),
-            Workout = new WorkoutDTO
-            {
-                Name = name,
-                DurationMinutes = durationMinutes,
-                DistanceMeters = distanceMeters
-            }
-        };
 }

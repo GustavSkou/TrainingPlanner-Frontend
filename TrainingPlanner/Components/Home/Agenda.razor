@@ -1,14 +1,21 @@
 @using TrainingPlanner.Models
 @using TrainingPlanner.Services.Contracts
 @using System.Globalization
+
 @inject IAgendaService AgendaService
 
 <main class="agenda @(!ShowForm ? "agenda-hidden" : "")">
     <EditForm Model="_newTrainingPlan" OnSubmit="SaveWorkout">
+        
         <header class="editor-topbar">
-            <div class="breadcrumbs">← <button type="button" @onclick="ToggleForm">Training calendar</button> <span>/</span> Edit workout</div>
+            <div class="breadcrumbs">← 
+                <button type="button" @onclick="ToggleForm">Training calendar</button> 
+                <span>/</span> Edit workout</div>
             <button type="button" class="editor-close" @onclick="ToggleForm" aria-label="Close workout editor">×</button>
-            <div class="editor-title"><h1>@(EditingPlan is null ? "Add workout" : "Edit workout")</h1><span class="draft-badge">Draft</span></div>
+            <div class="editor-title">
+                <h1>@(EditingPlan is null ? "Add workout" : "Edit workout")</h1>
+                <span class="draft-badge">Draft</span>
+            </div>
         </header>
 
         <div class="editor-layout">
@@ -136,7 +143,15 @@
                 @if (!string.IsNullOrWhiteSpace(_errorMessage)) { <p class="form-error">@_errorMessage</p> }
             </section>
         </div>
-        <footer class="editor-footer"><span>▣ Scheduled for @SelectedDate.ToString("dddd, MMMM d") <small>· Unsaved changes</small></span><div><button type="button" class="btn-cancel" @onclick="ToggleForm">Cancel</button><button type="submit" class="btn-submit">Save workout</button></div></footer>
+        <footer class="editor-footer">
+            <span>▣ Scheduled for @SelectedDate.ToString("dddd, MMMM d") 
+                <small>· Unsaved changes</small>
+            </span>
+                <div>
+                    <button type="button" class="btn-cancel" @onclick="ToggleForm">Cancel</button>
+                    <button type="submit" class="btn-submit">Save workout</button>
+                </div>
+        </footer>
     </EditForm>
 </main>
 
@@ -150,7 +165,11 @@
     [Parameter] public EventCallback OnFormClosed { get; set; }
     [Parameter] public EventCallback OnWorkoutSaved { get; set; }
 
-    private TrainingPlanDTO _newTrainingPlan = new() { Date = DateTime.Today };
+    private TrainingPlanDTO _newTrainingPlan = new() { 
+        Date = DateTime.Today, 
+        Workout = new WorkoutDTO()
+    };
+
     private bool _isFormExpanded;
     private bool _isRepeatEditorOpen;
     private int _repeatCount = 2;
@@ -309,6 +328,7 @@
 
     private async Task SaveWorkout()
     {
+
         _errorMessage = null;
         SelectedIntervals.Clear();
         _isRepeatEditorOpen = false;
@@ -353,27 +373,26 @@
         {
             _newTrainingPlan.Workout.Name = _newTrainingPlan.TrainingType.Name;
         }
+        _newTrainingPlan = new TrainingPlanDTO()
+        {
+            Id = null,
+            UserId = 1,
+            TrainingTypeId = 1,
+            Name = "lang dag",
+            Date = DateTime.Today,
+        };
 
-        try
-        {
-            TrainingPlanDTO savedPlan = _newTrainingPlan.Id.HasValue
-                ? await AgendaService.UpdateTrainingPlanAsync(_newTrainingPlan)
-                : await AgendaService.CreateTrainingPlanAsync(_newTrainingPlan);
-            savedPlan.TrainingType ??= _newTrainingPlan.TrainingType;
-            ReplaceOrAddPlan(savedPlan);
-            _isFormExpanded = false;
-            ResetForm();
-            await OnFormClosed.InvokeAsync();
-            await OnWorkoutSaved.InvokeAsync();
-        }
-        catch (HttpRequestException)
-        {
-            _errorMessage = "The workout could not be saved. Check the API connection and try again.";
-        }
-        catch (InvalidOperationException exception)
-        {
-            _errorMessage = exception.Message;
-        }
+        TrainingPlanDTO savedPlan = _newTrainingPlan.Id.HasValue ? 
+            await AgendaService.UpdateTrainingPlanAsync(_newTrainingPlan) : 
+            await AgendaService.CreateTrainingPlanAsync(_newTrainingPlan);
+        
+        savedPlan.TrainingType ??= _newTrainingPlan.TrainingType;
+        
+        ReplaceOrAddPlan(savedPlan);
+        _isFormExpanded = false;
+        ResetForm();
+        await OnFormClosed.InvokeAsync();
+        await OnWorkoutSaved.InvokeAsync();
     }
 
     private void ToggleForm()

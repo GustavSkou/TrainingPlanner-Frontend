@@ -1,13 +1,14 @@
 ﻿@page "/calendar"
-@rendermode InteractiveServer
-@inject NavigationManager _navigation
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
 
-@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @using TrainingPlanner.Models
 @using TrainingPlanner.Services.Contracts
 @using TrainingPlanner.Components.Home;
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @inject ICalendarService CalendarService
+@inject IUserService UserService
 
 <style>
     :root {
@@ -28,36 +29,38 @@
     }
 </style>
 
-<AuthorizeView>
-    <Authorized>
-    <div class="app-window">
-        <header class="stride-header">
-            <a class="brand" href="/calendar" aria-label="Stride home"><span class="brand-mark">⌁</span><strong>stride</strong></a>
-            <nav aria-label="Main navigation">
-                <a class="active" href="/calendar">Training calendar</a>
-                <a href="/plans">Training plans</a>
-                <a href="/workouts">Workout library</a>
-            </nav>
-            <span class="avatar">AL</span>
-        </header>
-        <section class="page-heading">
-            <div>
-                <h1>Training calendar</h1>
-            </div>
-            <button class="header-add-workout" @onclick="OpenWorkoutForm">+ Add workout</button>
-        </section>
-        <div class="app-content">
-            <Calendar CurrentMonth="_currentMonth"
-                    SelectedDate="_selectedDate"
-                    CalendarDays="_calendarDays"
-                    ActivityTypes="_activityTypes"
-                    TrainingPlans="_trainingPlans"
-                    OnSelectedDateChanged="SelectDate"
-                    OnCurrentMonthChanged="SetCurrentMonth"
-                    OnToggleActivityType="ToggleActivityType"
-                    OnWorkoutSelected="OpenExistingWorkout" />
+<div class="app-window">
+    <header class="stride-header">
+        <a class="brand" href="/calendar" aria-label="Stride home"><span class="brand-mark">⌁</span><strong>stride</strong></a>
+        <nav aria-label="Main navigation">
+            <a class="active" href="/calendar">Training calendar</a>
+            <a href="/plans">Training plans</a>
+            <a href="/workouts">Workout library</a>
+        </nav>
+        
+        <span class="avatar">@userDTO?.UserName</span>
+            
+    </header>
+    <section class="page-heading">
+        <div>
+            <h1>Training calendar</h1>
+        </div>
+        <button class="header-add-workout" @onclick="OpenWorkoutForm">+ Add workout</button>
+    </section>
+    <div class="app-content">
+        <Calendar 
+            CurrentMonth="_currentMonth"
+            SelectedDate="_selectedDate"
+            CalendarDays="_calendarDays"
+            ActivityTypes="_activityTypes"
+            TrainingPlans="_trainingPlans"
+            OnSelectedDateChanged="SelectDate"
+            OnCurrentMonthChanged="SetCurrentMonth"
+            OnToggleActivityType="ToggleActivityType"
+            OnWorkoutSelected="OpenExistingWorkout" />
 
-            <Agenda             SelectedDate="_selectedDate"
+        <Agenda             
+            SelectedDate="_selectedDate"
             SelectedPlans="GetSelectedPlans()"
             ActivityTypes="_activityTypes" 
             TrainingPlans="_trainingPlans"
@@ -65,58 +68,53 @@
             EditingPlan="_editingPlan"
             OnFormClosed="CloseWorkoutForm"
             OnWorkoutSaved="RefreshAgenda" />
-        </div>
     </div>
-    </Authorized>
-        
-    <NotAuthorized>
-        <Login/>
-    </NotAuthorized>
-</AuthorizeView>
-
+</div>
 
 @code {
-    private const double SidebarMinWidth = 410;
-    private const double SidebarMaxWidth = 700;
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private ClaimsPrincipal? _user;
+    private UserDTO? userDTO;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateTask is null)
+        {
+            throw new InvalidOperationException(
+                "Authentication state was not provided.");
+        }
+
+        AuthenticationState authenticationState = await AuthenticationStateTask;
+
+        _user = authenticationState.User;
+
+        if (!int.TryParse(authenticationState.User.FindFirst("app_user_id")?.Value, out int _userId) || _userId < 0) 
+            throw new InvalidOperationException("The authenticated user has no valid application user ID.");
+        
+        userDTO = await UserService.GetUserById(_userId);
+        if (userDTO.Id == null)
+            throw new InvalidOperationException("The userDTO has no valid application user ID.");
+
+        IReadOnlyList<TrainingTypeDTO> types = await CalendarService.GetTypesAsync();
+
+        _activityTypes = types.ToDictionary(t => t.Id, t => t);
+
+        IReadOnlyList<TrainingPlanDTO> plans = await CalendarService.GetTrainingPlansAsync(userDTO.Id);
+
+        _trainingPlans = plans.ToList();
+
+        await GenerateCalendar();
+    }
 
     private DateTime _currentMonth = DateTime.Today;
     private DateTime _selectedDate = DateTime.Today;
     private List<CalendarDay> _calendarDays = new();
-    private double _sidebarWidth = SidebarMinWidth;
-    private bool IsResizing;
-    private double _resizeStartX;
-    private double _resizeStartWidth;
     private Dictionary<int, TrainingTypeDTO> _activityTypes = new();
     private List<TrainingPlanDTO> _trainingPlans = new();
     private bool _showWorkoutForm;
     private TrainingPlanDTO? _editingPlan;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-
-        if (authState == null || 
-            authState.User == null || 
-            authState.User.Identity == null || 
-            !authState.User.Identity.IsAuthenticated) 
-        {
-            _navigation.NavigateTo("login");
-            return;
-        }
-
-        IReadOnlyList<TrainingTypeDTO> types = await CalendarService.GetTypesAsync();
-        _activityTypes = types.ToDictionary(t => t.Id, t => t);
-        IReadOnlyList<TrainingPlanDTO> plans = await CalendarService.GetTrainingPlansAsync();
-        _trainingPlans = plans.ToList();
-        foreach (TrainingPlanDTO plan in _trainingPlans)
-        {
-            if (plan.TrainingType is not null && _activityTypes.TryGetValue(plan.TrainingType.Id, out TrainingTypeDTO? type))
-            {
-                plan.TrainingType = type;
-            }
-        }
-        await GenerateCalendar();
-    }
 
     private Task SetCurrentMonth(DateTime month)
     {
@@ -188,5 +186,4 @@
                        (p.TrainingType == null || p.TrainingType.IsSelected))
             .ToList();
     }
-
 }
